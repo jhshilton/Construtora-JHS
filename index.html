@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciador de Obras</title>
-    <!-- Inclui o Tailwind CSS para estilização -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -33,46 +32,39 @@
 </head>
 <body class="bg-gray-100 p-4">
 
-    <!-- Tela de Carregamento -->
-    <div id="loading-screen" class="flex justify-center items-center h-screen">
-        <div class="text-gray-600">Carregando...</div>
+    <!-- Tela de Login -->
+    <div id="login-screen" class="flex flex-col items-center justify-center h-screen">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Acesso ao Sistema</h1>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+                    <input type="password" id="password" name="password" 
+                           class="input-field" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" 
+                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                    Acessar
+                </button>
+            </form>
+        </div>
     </div>
 
-    <!-- Tela Inicial -->
-    <div id="initial-screen" class="hidden flex flex-col items-center justify-center h-screen text-center">
-        <h1 class="text-3xl font-bold text-gray-900 mb-4">Bem-vindo, Hilton Serviço!</h1>
-        <p class="text-center text-gray-600 mb-8">
-            Para começar, escolha uma das opções abaixo.
-        </p>
-        <button id="new-project-btn" class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-blue-600 transition-colors mb-4">
-            Novo Projeto ✨
-        </button>
-        <div class="w-full text-center my-4 text-gray-500">
-            <p>ou</p>
-        </div>
-        <div class="w-full bg-white rounded-xl shadow-lg p-6">
-            <h2 class="text-xl font-semibold mb-4 text-gray-900">Carregar Projeto Existente</h2>
-            <p class="text-sm text-gray-600 mb-4">
-                Cole o seu ID de usuário para carregar os dados de outro dispositivo.
-            </p>
-            <div class="flex flex-col space-y-4">
-                <input id="input-user-id" type="text" placeholder="Cole seu ID de usuário aqui" class="input-field" />
-                <button id="load-project-btn" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-green-600 transition-colors">
-                    Carregar Dados
-                </button>
-            </div>
-        </div>
+    <!-- Tela de Carregamento -->
+    <div id="loading-screen" class="hidden flex justify-center items-center h-screen">
+        <div class="text-gray-600">Carregando seus dados...</div>
     </div>
 
     <!-- Aplicativo Principal -->
     <div id="main-app" class="hidden container">
+        <!-- Cabeçalho -->
         <header class="text-center mt-8 mb-6">
             <h1 class="text-3xl font-bold text-gray-900">Gerenciador de Obras</h1>
             <p class="text-gray-600 mt-2">Acompanhe adiantamentos e o saldo da sua obra.</p>
             
             <div class="mt-4 p-4 bg-yellow-100 rounded-xl border-2 border-yellow-300 flex flex-col sm:flex-row items-center justify-between">
                 <div class="flex flex-col text-left">
-                    <span class="text-sm font-bold text-gray-800">Seu ID de Usuário (Importante)</span>
+                    <span class="text-sm font-bold text-gray-800">Seu ID de Usuário</span>
                     <span id="display-user-id" class="text-sm font-mono break-all text-gray-600 mt-1"></span>
                 </div>
                 <button id="copy-user-id-btn" class="mt-2 sm:mt-0 px-4 py-2 bg-yellow-500 text-white text-sm font-bold rounded-full hover:bg-yellow-600 transition-colors">
@@ -81,6 +73,7 @@
             </div>
         </header>
         
+        <!-- Seção de Detalhes da Obra -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold text-gray-900">Detalhes da Obra</h2>
@@ -89,6 +82,7 @@
                 </button>
             </div>
             
+            <!-- Modo Visualização -->
             <div id="display-obra-data" class="space-y-3">
                 <div class="flex items-center space-x-3 text-lg">
                     <span class="text-blue-500">🏠</span>
@@ -108,22 +102,23 @@
                 </div>
             </div>
 
+            <!-- Modo Edição -->
             <form id="edit-obra-form" class="hidden space-y-4">
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Nome da Obra:</label>
-                    <input id="input-obra-nome" type="text" placeholder="Ex: Reforma da Casa" class="input-field" />
+                    <input id="input-obra-nome" type="text" placeholder="Ex: Reforma da Casa" class="input-field">
                 </div>
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Início da Obra:</label>
-                    <input id="input-obra-data" type="date" class="input-field" />
+                    <input id="input-obra-data" type="date" class="input-field">
                 </div>
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Valor da Mão de Obra (R$):</label>
-                    <input id="input-obra-valor" type="number" placeholder="0.00" class="input-field" />
+                    <input id="input-obra-valor" type="number" placeholder="0.00" class="input-field">
                 </div>
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Metros Quadrados (m²):</label>
-                    <input id="input-obra-metro" type="number" placeholder="0" class="input-field" />
+                    <input id="input-obra-metro" type="number" placeholder="0" class="input-field">
                 </div>
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Descrição do Serviço:</label>
@@ -138,20 +133,21 @@
             </form>
         </div>
 
+        <!-- Seção de Adiantamentos -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4 text-gray-900">Adicionar Adiantamento (Vale)</h2>
             <form id="add-adiantamento-form" class="space-y-4">
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Data:</label>
-                    <input type="date" name="data" required class="input-field" />
+                    <input type="date" name="data" required class="input-field">
                 </div>
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Descrição:</label>
-                    <input type="text" name="descricao" placeholder="Ex: Vale semanal" class="input-field" />
+                    <input type="text" name="descricao" placeholder="Ex: Vale semanal" class="input-field">
                 </div>
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Valor (R$):</label>
-                    <input type="number" name="valor" placeholder="0.00" required class="input-field" />
+                    <input type="number" name="valor" placeholder="0.00" required class="input-field">
                 </div>
                 <button type="submit" class="w-full bg-green-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-green-600 transition-colors">
                     <span class="text-lg">+</span> Adicionar Vale
@@ -159,27 +155,29 @@
             </form>
         </div>
 
+        <!-- Histórico de Adiantamentos -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4 text-gray-900">Histórico de Adiantamentos</h2>
             <ul id="adiantamentos-list" class="divide-y divide-gray-200">
-                <!-- Adiantamentos serão renderizados aqui -->
+                <li class="py-4 text-center text-gray-500">Nenhum adiantamento registrado</li>
             </ul>
         </div>
 
+        <!-- Seção de Serviços Extras -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4 text-gray-900">Adicionar Serviços Extras</h2>
             <form id="add-servico-extra-form" class="space-y-4">
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Data:</label>
-                    <input type="date" name="data" required class="input-field" />
+                    <input type="date" name="data" required class="input-field">
                 </div>
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Descrição:</label>
-                    <input type="text" name="descricao" placeholder="Ex: Compra de cimento, trabalho extra" class="input-field" />
+                    <input type="text" name="descricao" placeholder="Ex: Compra de cimento, trabalho extra" class="input-field">
                 </div>
                 <div class="flex flex-col">
                     <label class="text-sm font-medium mb-1">Valor (R$):</label>
-                    <input type="number" name="valor" placeholder="0.00" required class="input-field" />
+                    <input type="number" name="valor" placeholder="0.00" required class="input-field">
                 </div>
                 <button type="submit" class="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-orange-600 transition-colors">
                     <span class="text-lg">+</span> Adicionar Serviço Extra
@@ -187,13 +185,15 @@
             </form>
         </div>
 
+        <!-- Histórico de Serviços Extras -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4 text-gray-900">Histórico de Serviços Extras</h2>
             <ul id="servicos-extras-list" class="divide-y divide-gray-200">
-                <!-- Serviços extras serão renderizados aqui -->
+                <li class="py-4 text-center text-gray-500">Nenhum serviço extra registrado</li>
             </ul>
         </div>
 
+        <!-- Resumo Financeiro -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4 text-gray-900">Resumo Financeiro</h2>
             <div class="grid grid-cols-3 gap-4 text-center">
@@ -216,7 +216,7 @@
         </div>
 
         <footer class="text-center text-sm text-gray-500 mt-6 pb-4">
-            <p>Desenvolvido com ❤</p>
+            <p>Desenvolvido com ❤ para Hilton Serviço</p>
         </footer>
     </div>
 
@@ -236,49 +236,77 @@
             </div>
         </div>
     </div>
-    
-    <!-- Inclui as bibliotecas do Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Variáveis de ambiente
-        const firebaseConfig = typeof _firebase_config !== 'undefined' ? JSON.parse(_firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : '';
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-        // Variáveis globais para o estado do aplicativo
-        let db, auth;
-        let userId = null;
-        let isEditingObra = false;
+    <script>
+        // Configuração do aplicativo
+        const APP_PASSWORD = "Leticia180977";
+        const LOCAL_STORAGE_KEY = "hilton_servico_obra_data";
+        
+        // Estado do aplicativo
         let userData = {
             obraData: {},
             adiantamentosData: [],
             servicosExtrasData: []
         };
+        let isEditingObra = false;
+        let userId = generateUserId();
         
         // Funções de utilidade
-        const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-        const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('pt-BR') : 'N/A';
-
-        const showCustomAlert = (title, message) => {
+        function generateUserId() {
+            return 'user_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            // Corrige o fuso horário
+            date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+            return date.toLocaleDateString('pt-BR');
+        }
+        
+        function showCustomAlert(title, message) {
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-content').textContent = message;
             document.getElementById('custom-alert-modal').classList.remove('hidden');
-        };
-
-        const hideCustomAlert = () => {
+        }
+        
+        function hideCustomAlert() {
             document.getElementById('custom-alert-modal').classList.add('hidden');
-        };
-
+        }
+        
+        // Salva os dados no localStorage
+        function saveData() {
+            const dataToSave = {
+                userId: userId,
+                data: userData,
+                lastSaved: new Date().toISOString()
+            };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
+        }
+        
+        // Carrega os dados do localStorage
+        function loadData() {
+            const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+                    userId = parsedData.userId || userId;
+                    userData = parsedData.data || userData;
+                    return true;
+                } catch (e) {
+                    console.error("Erro ao carregar dados salvos:", e);
+                    return false;
+                }
+            }
+            return false;
+        }
+        
         // Renderiza o aplicativo na tela
-        const renderApp = () => {
-            // Esconde a tela de carregamento e inicial, mostra o app principal
-            document.getElementById('loading-screen').classList.add('hidden');
-            document.getElementById('initial-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-
+        function renderApp() {
             // Renderiza os dados da obra
             if (isEditingObra) {
                 document.getElementById('display-obra-data').classList.add('hidden');
@@ -302,7 +330,7 @@
             }
             
             // Renderiza o ID do usuário
-            document.getElementById('display-user-id').textContent = userId || 'N/A';
+            document.getElementById('display-user-id').textContent = userId;
 
             // Renderiza a lista de adiantamentos
             const adiantamentosList = document.getElementById('adiantamentos-list');
@@ -321,7 +349,7 @@
                         </div>
                     </li>
                 `).join('')
-                : '<p class="text-center text-gray-500 py-4">Nenhum adiantamento registrado.</p>';
+                : '<li class="py-4 text-center text-gray-500">Nenhum adiantamento registrado</li>';
 
             // Renderiza a lista de serviços extras
             const servicosExtrasList = document.getElementById('servicos-extras-list');
@@ -340,7 +368,7 @@
                         </div>
                     </li>
                 `).join('')
-                : '<p class="text-center text-gray-500 py-4">Nenhum serviço extra registrado.</p>';
+                : '<li class="py-4 text-center text-gray-500">Nenhum serviço extra registrado</li>';
 
             // Renderiza o resumo financeiro
             const totalAdiantado = userData.adiantamentosData.reduce((acc, curr) => acc + (curr.valor || 0), 0);
@@ -355,238 +383,166 @@
             saldoElement.textContent = formatCurrency(saldoRestante);
             saldoElement.classList.toggle('text-red-600', saldoRestante < 0);
             saldoElement.classList.toggle('text-green-600', saldoRestante >= 0);
-        };
-
-        // Salva os dados no Firestore
-        const saveUserData = async (data) => {
-            if (!db || !userId) {
-                showCustomAlert("Erro de Sincronização", "Não foi possível salvar os dados. Verifique a sua conexão.");
-                return;
-            }
-            try {
-                const obraRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'obra');
-                await setDoc(obraRef, data);
-            } catch (e) {
-                console.error("Erro ao salvar dados:", e);
-                showCustomAlert("Erro de Sincronização", "Não foi possível salvar os dados. Tente novamente.");
-            }
-        };
+            
+            // Salva os dados após cada renderização
+            saveData();
+        }
 
         // Event Listeners
-        window.onload = async () => {
-            // Inicializa o Firebase
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-            } catch (e) {
-                console.error("Erro ao inicializar o Firebase:", e);
-                showCustomAlert("Erro Crítico", "Não foi possível iniciar o aplicativo. Verifique sua conexão com a internet.");
-                return;
-            }
-
-            // Autentica o usuário
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                    document.getElementById('loading-screen').classList.add('hidden');
-                    document.getElementById('initial-screen').classList.remove('hidden');
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verifica se há dados salvos
+            const hasSavedData = loadData();
+            
+            // Formulário de Login
+            document.getElementById('login-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const password = document.getElementById('password').value;
+                
+                if (password === APP_PASSWORD) {
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('loading-screen').classList.remove('hidden');
+                    
+                    // Simula um carregamento rápido
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').classList.add('hidden');
+                        document.getElementById('main-app').classList.remove('hidden');
+                        renderApp();
+                    }, 1000);
                 } else {
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (e) {
-                        console.error("Erro na autenticação:", e);
-                        showCustomAlert("Erro de Autenticação", "Não foi possível autenticar. Tente recarregar a página.");
-                    }
+                    showCustomAlert("Acesso Negado", "Senha incorreta. Por favor, tente novamente.");
                 }
             });
-        };
 
-        // Botão Novo Projeto
-        document.getElementById('new-project-btn').addEventListener('click', async () => {
-            userData = {
-                obraData: {},
-                adiantamentosData: [],
-                servicosExtrasData: []
-            };
-            await saveUserData(userData);
-            
-            const obraRef = doc(db, 'artifacts', appId, 'users', userId, 'data', 'obra');
-            onSnapshot(obraRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    userData = docSnap.data();
+            // Botão Copiar ID
+            document.getElementById('copy-user-id-btn').addEventListener('click', () => {
+                navigator.clipboard.writeText(userId).then(() => {
+                    showCustomAlert("Sucesso", "ID de usuário copiado para a área de transferência!");
+                }).catch(err => {
+                    showCustomAlert("Erro", "Não foi possível copiar o ID. Tente novamente.");
+                });
+            });
+
+            // Botão Editar Obra
+            document.getElementById('edit-obra-btn').addEventListener('click', () => {
+                isEditingObra = !isEditingObra;
+                renderApp();
+            });
+
+            // Formulário de Edição da Obra
+            document.getElementById('edit-obra-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                userData.obraData = {
+                    nome: document.getElementById('input-obra-nome').value,
+                    dataInicio: document.getElementById('input-obra-data').value,
+                    valorMaoObra: parseFloat(document.getElementById('input-obra-valor').value) || 0,
+                    metroQuadrado: parseFloat(document.getElementById('input-obra-metro').value) || 0,
+                    servico: document.getElementById('input-obra-servico').value,
+                };
+                isEditingObra = false;
+                renderApp();
+            });
+
+            // Formulário de Adiantamento
+            document.getElementById('add-adiantamento-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const newAdiantamento = {
+                    id: Date.now(),
+                    data: form.data.value,
+                    descricao: form.descricao.value,
+                    valor: parseFloat(form.valor.value) || 0
+                };
+                userData.adiantamentosData.push(newAdiantamento);
+                form.reset();
+                renderApp();
+            });
+
+            // Remover Adiantamento
+            document.getElementById('adiantamentos-list').addEventListener('click', (e) => {
+                if (e.target.closest('.remove-adiantamento-btn')) {
+                    const id = parseInt(e.target.closest('.remove-adiantamento-btn').dataset.id);
+                    userData.adiantamentosData = userData.adiantamentosData.filter(item => item.id !== id);
                     renderApp();
                 }
             });
 
-            document.getElementById('initial-screen').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-        });
-
-        // Botão Carregar Projeto
-        document.getElementById('load-project-btn').addEventListener('click', async () => {
-            const inputUserId = document.getElementById('input-user-id').value;
-            if (!inputUserId) {
-                showCustomAlert("Aviso", "Por favor, insira um ID de usuário.");
-                return;
-            }
-
-            try {
-                const obraRef = doc(db, 'artifacts', appId, 'users', inputUserId, 'data', 'obra');
-                const docSnap = await getDoc(obraRef);
-                if (docSnap.exists()) {
-                    userId = inputUserId;
-                    onSnapshot(obraRef, (docSnap) => {
-                        userData = docSnap.data();
-                        renderApp();
-                    });
-                    document.getElementById('initial-screen').classList.add('hidden');
-                    document.getElementById('main-app').classList.remove('hidden');
-                } else {
-                    showCustomAlert("Erro", "ID de usuário não encontrado.");
-                }
-            } catch (e) {
-                console.error("Erro ao carregar dados:", e);
-                showCustomAlert("Erro", "Erro ao carregar dados. Verifique o ID e sua conexão.");
-            }
-        });
-
-        // Botão Copiar ID
-        document.getElementById('copy-user-id-btn').addEventListener('click', () => {
-            const userIdText = document.getElementById('display-user-id').textContent;
-            navigator.clipboard.writeText(userIdText).then(() => {
-                showCustomAlert("Sucesso", "ID de usuário copiado para a área de transferência!");
-            }).catch(err => {
-                showCustomAlert("Erro", "Não foi possível copiar o ID. Tente novamente.");
+            // Formulário de Serviço Extra
+            document.getElementById('add-servico-extra-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const newServicoExtra = {
+                    id: Date.now(),
+                    data: form.data.value,
+                    descricao: form.descricao.value,
+                    valor: parseFloat(form.valor.value) || 0
+                };
+                userData.servicosExtrasData.push(newServicoExtra);
+                form.reset();
+                renderApp();
             });
-        });
 
-        // Botão Editar Obra
-        document.getElementById('edit-obra-btn').addEventListener('click', () => {
-            isEditingObra = !isEditingObra;
-            renderApp();
-        });
+            // Remover Serviço Extra
+            document.getElementById('servicos-extras-list').addEventListener('click', (e) => {
+                if (e.target.closest('.remove-servico-extra-btn')) {
+                    const id = parseInt(e.target.closest('.remove-servico-extra-btn').dataset.id);
+                    userData.servicosExtrasData = userData.servicosExtrasData.filter(item => item.id !== id);
+                    renderApp();
+                }
+            });
 
-        // Formulário de Edição da Obra
-        document.getElementById('edit-obra-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            userData.obraData = {
-                nome: document.getElementById('input-obra-nome').value,
-                dataInicio: document.getElementById('input-obra-data').value,
-                valorMaoObra: parseFloat(document.getElementById('input-obra-valor').value) || 0,
-                metroQuadrado: parseFloat(document.getElementById('input-obra-metro').value) || 0,
-                servico: document.getElementById('input-obra-servico').value,
-            };
-            await saveUserData(userData);
-            isEditingObra = false;
-            renderApp();
-        });
+            // Gerar Checklist
+            document.getElementById('generate-checklist-btn').addEventListener('click', () => {
+                const servico = document.getElementById('input-obra-servico').value.trim();
+                if (!servico) {
+                    showCustomAlert("Aviso", "Por favor, preencha a Descrição do Serviço para gerar uma checklist.");
+                    return;
+                }
 
-        // Formulário de Adiantamento
-        document.getElementById('add-adiantamento-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const newAdiantamento = {
-                id: Date.now(),
-                data: form.data.value,
-                descricao: form.descricao.value,
-                valor: parseFloat(form.valor.value) || 0
-            };
-            userData.adiantamentosData.push(newAdiantamento);
-            await saveUserData(userData);
-            form.reset();
-        });
-
-        // Remover Adiantamento
-        document.getElementById('adiantamentos-list').addEventListener('click', async (e) => {
-            if (e.target.closest('.remove-adiantamento-btn')) {
-                const id = parseInt(e.target.closest('.remove-adiantamento-btn').dataset.id);
-                userData.adiantamentosData = userData.adiantamentosData.filter(item => item.id !== id);
-                await saveUserData(userData);
-            }
-        });
-
-        // Formulário de Serviço Extra
-        document.getElementById('add-servico-extra-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const newServicoExtra = {
-                id: Date.now(),
-                data: form.data.value,
-                descricao: form.descricao.value,
-                valor: parseFloat(form.valor.value) || 0
-            };
-            userData.servicosExtrasData.push(newServicoExtra);
-            await saveUserData(userData);
-            form.reset();
-        });
-
-        // Remover Serviço Extra
-        document.getElementById('servicos-extras-list').addEventListener('click', async (e) => {
-            if (e.target.closest('.remove-servico-extra-btn')) {
-                const id = parseInt(e.target.closest('.remove-servico-extra-btn').dataset.id);
-                userData.servicosExtrasData = userData.servicosExtrasData.filter(item => item.id !== id);
-                await saveUserData(userData);
-            }
-        });
-
-        // Gerar Checklist
-        document.getElementById('generate-checklist-btn').addEventListener('click', () => {
-            const servico = document.getElementById('input-obra-servico').value.trim();
-            if (!servico) {
-                showCustomAlert("Aviso", "Por favor, preencha a Descrição do Serviço para gerar uma checklist.");
-                return;
-            }
-
-            let checklistItems = ['Verificar materiais necessários', 'Limpar e preparar o local', 'Realizar medições e marcações'];
-            if (servico.toLowerCase().includes('pintura')) {
-                checklistItems = ['Proteger áreas não pintadas', 'Lixar e limpar as paredes', 'Aplicar massa corrida', 'Aplicar selador', 'Dar demãos de tinta'];
-            } else if (servico.toLowerCase().includes('piso')) {
-                checklistItems = ['Remover o piso antigo', 'Preparar a base (contrapiso)', 'Assentar o novo piso', 'Aplicar rejunte', 'Limpar e proteger o novo piso'];
-            }
-            
-            const listText = checklistItems.map(item => - ${item}).join('\n');
-            showCustomAlert("Checklist Gerada", listText);
-        });
-
-        // Gerar Relatório
-        document.getElementById('generate-report-btn').addEventListener('click', () => {
-            const adiantamentosReport = userData.adiantamentosData.map(a => - Data: ${formatDate(a.data)}, Descrição: ${a.descricao}, Valor: ${formatCurrency(a.valor)}).join('\n') || '- Nenhum adiantamento registrado.';
-            const servicosExtrasReport = userData.servicosExtrasData.map(a => - Data: ${formatDate(a.data)}, Descrição: ${a.descricao}, Valor: ${formatCurrency(a.valor)}).join('\n') || '- Nenhum serviço extra registrado.';
-            
-            const totalAdiantado = userData.adiantamentosData.reduce((acc, curr) => acc + (curr.valor || 0), 0);
-            const totalServicosExtras = userData.servicosExtrasData.reduce((acc, curr) => acc + (curr.valor || 0), 0);
-            const totalObra = (userData.obraData.valorMaoObra || 0) + totalServicosExtras;
-            const saldoRestante = totalObra - totalAdiantado;
-
-            const reportText = `
-                Relatório Financeiro
-                ------------------------
-                Nome da Obra: ${userData.obraData.nome || 'N/A'}
-                Início da Obra: ${formatDate(userData.obraData.dataInicio)}
-                Serviço: ${userData.obraData.servico || 'N/A'}
-
-                Histórico de Adiantamentos:
-                ${adiantamentosReport}
-
-                Serviços Extras:
-                ${servicosExtrasReport}
+                let checklistItems = ['Verificar materiais necessários', 'Limpar e preparar o local', 'Realizar medições e marcações'];
+                if (servico.toLowerCase().includes('pintura')) {
+                    checklistItems = ['Proteger áreas não pintadas', 'Lixar e limpar as paredes', 'Aplicar massa corrida', 'Aplicar selador', 'Dar demãos de tinta'];
+                } else if (servico.toLowerCase().includes('piso')) {
+                    checklistItems = ['Remover o piso antigo', 'Preparar a base (contrapiso)', 'Assentar o novo piso', 'Aplicar rejunte', 'Limpar e proteger o novo piso'];
+                }
                 
-                Resumo Financeiro:
-                Valor da Mão de Obra: ${formatCurrency(userData.obraData.valorMaoObra || 0)}
-                Total da Obra (com extras): ${formatCurrency(totalObra)}
-                Total Adiantado: ${formatCurrency(totalAdiantado)}
-                Saldo Restante: ${formatCurrency(saldoRestante)}
-            `;
-            showCustomAlert("Relatório Financeiro", reportText);
+                const listText = checklistItems.map(item => `- ${item}`).join('\n');
+                showCustomAlert("Checklist Gerada", listText);
+            });
+
+            // Gerar Relatório
+            document.getElementById('generate-report-btn').addEventListener('click', () => {
+                const adiantamentosReport = userData.adiantamentosData.map(a => `- Data: ${formatDate(a.data)}, Descrição: ${a.descricao}, Valor: ${formatCurrency(a.valor)}`).join('\n') || '- Nenhum adiantamento registrado.';
+                const servicosExtrasReport = userData.servicosExtrasData.map(a => `- Data: ${formatDate(a.data)}, Descrição: ${a.descricao}, Valor: ${formatCurrency(a.valor)}`).join('\n') || '- Nenhum serviço extra registrado.';
+                
+                const totalAdiantado = userData.adiantamentosData.reduce((acc, curr) => acc + (curr.valor || 0), 0);
+                const totalServicosExtras = userData.servicosExtrasData.reduce((acc, curr) => acc + (curr.valor || 0), 0);
+                const totalObra = (userData.obraData.valorMaoObra || 0) + totalServicosExtras;
+                const saldoRestante = totalObra - totalAdiantado;
+
+                const reportText = `
+                    Relatório Financeiro
+                    ------------------------
+                    Nome da Obra: ${userData.obraData.nome || 'N/A'}
+                    Início da Obra: ${formatDate(userData.obraData.dataInicio)}
+                    Serviço: ${userData.obraData.servico || 'N/A'}
+
+                    Histórico de Adiantamentos:
+                    ${adiantamentosReport}
+
+                    Serviços Extras:
+                    ${servicosExtrasReport}
+                    
+                    Resumo Financeiro:
+                    Valor da Mão de Obra: ${formatCurrency(userData.obraData.valorMaoObra || 0)}
+                    Total da Obra (com extras): ${formatCurrency(totalObra)}
+                    Total Adiantado: ${formatCurrency(totalAdiantado)}
+                    Saldo Restante: ${formatCurrency(saldoRestante)}
+                `;
+                showCustomAlert("Relatório Financeiro", reportText);
+            });
+
+            document.getElementById('close-modal-btn').addEventListener('click', hideCustomAlert);
         });
-
-        document.getElementById('close-modal-btn').addEventListener('click', hideCustomAlert);
-
     </script>
 </body>
 </html>
