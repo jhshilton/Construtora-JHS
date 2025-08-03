@@ -39,6 +39,7 @@
                 window.location.href = "index.html";
             } else {
                 currentUser = user;
+                console.log("Usuário autenticado:", currentUser.uid); // Log para depuração
                 loadAllData();
             }
         });
@@ -56,11 +57,14 @@
                 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    console.log("Dados da obra carregados:", data); // Log para depuração
                     document.getElementById("project-name").value = data.name || "";
                     document.getElementById("project-value").value = formatCurrencyInputValue(data.value || 0);
                     document.getElementById("project-start").value = data.startDate || "";
                     document.getElementById("project-description").value = data.description || "";
                     await updateReport();
+                } else {
+                    console.log("Nenhum dado de obra encontrado para o usuário:", currentUser.uid);
                 }
             } catch (error) {
                 console.error("Erro ao carregar obra:", error);
@@ -70,15 +74,23 @@
 
         document.getElementById("save-project-btn").addEventListener("click", async () => {
             try {
+                const projectValueRaw = document.getElementById("project-value").value;
+                const projectValue = parseFloat(projectValueRaw.replace(/\./g, "").replace(",", ".")) || 0;
+                if (isNaN(projectValue) || projectValue < 0) {
+                    showToast("Insira um valor válido para a obra!", true);
+                    return;
+                }
+
                 const projectData = {
                     name: document.getElementById("project-name").value,
-                    value: parseFloat(document.getElementById("project-value").value.replace(/\./g, "").replace(",", ".")) || 0,
+                    value: projectValue,
                     startDate: document.getElementById("project-start").value,
                     description: document.getElementById("project-description").value,
                     userId: currentUser.uid,
                     lastUpdate: new Date()
                 };
 
+                console.log("Salvando dados da obra:", projectData); // Log para depuração
                 await setDoc(doc(db, "projects", currentUser.uid), projectData);
                 showToast("Informações da obra salvas com sucesso!");
                 await updateReport();
@@ -103,6 +115,7 @@
                 
                 querySnapshot.forEach((doc) => {
                     const payment = doc.data();
+                    console.log("Vale carregado:", payment); // Log para depuração
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${formatDate(payment.date)}</td>
@@ -115,6 +128,7 @@
                     tbody.appendChild(row);
                 });
 
+                console.log("Total de vales carregados:", querySnapshot.size); // Log para depuração
                 await updateReport();
                 setupDeleteButtons();
             } catch (error) {
@@ -125,7 +139,8 @@
 
         document.getElementById("add-payment-btn").addEventListener("click", async () => {
             try {
-                const paymentValue = parseFloat(document.getElementById("payment-value").value.replace(/\./g, "").replace(",", "."));
+                const paymentValueRaw = document.getElementById("payment-value").value;
+                const paymentValue = parseFloat(paymentValueRaw.replace(/\./g, "").replace(",", ".")) || 0;
                 const paymentDate = document.getElementById("payment-date").value;
                 const paymentDescription = document.getElementById("payment-description").value;
 
@@ -142,6 +157,7 @@
                     createdAt: new Date()
                 };
 
+                console.log("Salvando vale:", paymentData); // Log para depuração
                 await addDoc(collection(db, "payments"), paymentData);
                 
                 document.getElementById("payment-value").value = "0,00";
@@ -171,6 +187,7 @@
                 
                 querySnapshot.forEach((doc) => {
                     const extra = doc.data();
+                    console.log("Serviço extra carregado:", extra); // Log para depuração
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${formatDate(extra.date)}</td>
@@ -183,6 +200,7 @@
                     tbody.appendChild(row);
                 });
 
+                console.log("Total de serviços extras carregados:", querySnapshot.size); // Log para depuração
                 await updateReport();
                 setupDeleteButtons();
             } catch (error) {
@@ -194,7 +212,8 @@
         document.getElementById("add-extra-btn").addEventListener("click", async () => {
             try {
                 const extraService = document.getElementById("extra-service").value;
-                const extraValue = parseFloat(document.getElementById("extra-value").value.replace(/\./g, "").replace(",", "."));
+                const extraValueRaw = document.getElementById("extra-value").value;
+                const extraValue = parseFloat(extraValueRaw.replace(/\./g, "").replace(",", ".")) || 0;
                 const extraDate = document.getElementById("extra-date").value;
 
                 if (!extraDate || !extraService || isNaN(extraValue) || extraValue <= 0) {
@@ -210,6 +229,7 @@
                     createdAt: new Date()
                 };
 
+                console.log("Salvando serviço extra:", extraData); // Log para depuração
                 await addDoc(collection(db, "extras"), extraData);
                 
                 document.getElementById("extra-service").value = "";
@@ -274,6 +294,7 @@
                     tbody.appendChild(row);
                 });
 
+                console.log("Total de comprovantes carregados:", querySnapshot.size); // Log para depuração
                 setupDeleteButtons();
             } catch (error) {
                 console.error("Erro ao carregar comprovantes:", error);
@@ -301,6 +322,7 @@
                     createdAt: new Date()
                 };
 
+                console.log("Salvando comprovante:", receiptData); // Log para depuração
                 await addDoc(collection(db, "receipts"), receiptData);
                 
                 document.getElementById("receipt-description").value = "";
@@ -327,6 +349,8 @@
                     ? parseFloat(projectDocSnap.data().value) || 0 
                     : 0;
 
+                console.log("Valor da obra:", projectValue); // Log para depuração
+
                 // Calcular total de vales recebidos
                 let totalReceived = 0;
                 const paymentsQuery = query(
@@ -336,8 +360,11 @@
                 const paymentsSnapshot = await getDocs(paymentsQuery);
                 paymentsSnapshot.forEach((doc) => {
                     const payment = doc.data();
+                    console.log("Vale carregado:", payment); // Log para depuração
                     totalReceived += parseFloat(payment.value) || 0;
                 });
+
+                console.log("Total de vales recebidos:", totalReceived); // Log para depuração
 
                 // Calcular total de serviços extras
                 let totalExtras = 0;
@@ -348,8 +375,11 @@
                 const extrasSnapshot = await getDocs(extrasQuery);
                 extrasSnapshot.forEach((doc) => {
                     const extra = doc.data();
+                    console.log("Serviço extra carregado:", extra); // Log para depuração
                     totalExtras += parseFloat(extra.value) || 0;
                 });
+
+                console.log("Total de serviços extras:", totalExtras); // Log para depuração
 
                 // Calcular valor total (obra + extras)
                 const totalValue = projectValue + totalExtras;
@@ -366,6 +396,8 @@
                 const balanceElement = document.getElementById("balance");
                 balanceElement.textContent = formatCurrency(balance);
                 balanceElement.style.color = balance >= 0 ? '#2ecc71' : '#e74c3c';
+
+                console.log("Relatório atualizado:", { projectValue, totalExtras, totalValue, totalReceived, balance }); // Log para depuração
             } catch (error) {
                 console.error("Erro ao atualizar relatório financeiro:", error);
                 showToast("Erro ao atualizar relatório financeiro", true);
@@ -375,84 +407,90 @@
         document.getElementById("generate-pdf-btn").addEventListener("click", generatePDFReport);
 
         function generatePDFReport() {
-            const doc = new jsPDF();
-            
-            doc.setFontSize(18);
-            doc.setTextColor(40, 40, 40);
-            doc.text("Relatório Financeiro - Construtora JHS", 105, 15, { align: "center" });
-            
-            doc.setFontSize(12);
-            doc.text(`Emitido em: ${new Date().toLocaleDateString("pt-BR")}`, 105, 25, { align: "center" });
-            
-            doc.setFontSize(14);
-            doc.text("Informações da Obra", 14, 40);
-            
-            doc.setFontSize(12);
-            doc.text(`Nome: ${document.getElementById("project-name").value || "Não informado"}`, 14, 50);
-            doc.text(`Valor: ${document.getElementById("project-value-display").textContent}`, 14, 60);
-            
-            doc.setFontSize(14);
-            doc.text("Vales Recebidos", 14, 80);
-            
-            const payments = [];
-            document.querySelectorAll("#payments-table tbody tr").forEach(row => {
-                payments.push([
-                    row.cells[0].textContent,
-                    row.cells[1].textContent,
-                    row.cells[2].textContent
-                ]);
-            });
-            
-            if (payments.length > 0) {
-                doc.autoTable({
-                    startY: 85,
-                    head: [["Data", "Descrição", "Valor"]],
-                    body: payments,
-                    theme: "grid"
+            try {
+                const doc = new jsPDF();
+                
+                doc.setFontSize(18);
+                doc.setTextColor(40, 40, 40);
+                doc.text("Relatório Financeiro - Construtora JHS", 105, 15, { align: "center" });
+                
+                doc.setFontSize(12);
+                doc.text(`Emitido em: ${new Date().toLocaleDateString("pt-BR")}`, 105, 25, { align: "center" });
+                
+                doc.setFontSize(14);
+                doc.text("Informações da Obra", 14, 40);
+                
+                doc.setFontSize(12);
+                doc.text(`Nome: ${document.getElementById("project-name").value || "Não informado"}`, 14, 50);
+                doc.text(`Valor: ${document.getElementById("project-value-display").textContent}`, 14, 60);
+                
+                doc.setFontSize(14);
+                doc.text("Vales Recebidos", 14, 80);
+                
+                const payments = [];
+                document.querySelectorAll("#payments-table tbody tr").forEach(row => {
+                    payments.push([
+                        row.cells[0].textContent,
+                        row.cells[1].textContent,
+                        row.cells[2].textContent
+                    ]);
                 });
-            } else {
-                doc.text("Nenhum vale registrado", 14, 85);
-            }
-            
-            doc.setFontSize(14);
-            doc.text("Serviços Extras", 14, doc.autoTable.previous.finalY + 15);
-            
-            const extras = [];
-            document.querySelectorAll("#extras-table tbody tr").forEach(row => {
-                extras.push([
-                    row.cells[0].textContent,
-                    row.cells[1].textContent,
-                    row.cells[2].textContent
-                ]);
-            });
-            
-            if (extras.length > 0) {
-                doc.autoTable({
-                    startY: doc.autoTable.previous.finalY + 20,
-                    head: [["Data", "Serviço", "Valor"]],
-                    body: extras,
-                    theme: "grid"
+                
+                if (payments.length > 0) {
+                    doc.autoTable({
+                        startY: 85,
+                        head: [["Data", "Descrição", "Valor"]],
+                        body: payments,
+                        theme: "grid"
+                    });
+                } else {
+                    doc.text("Nenhum vale registrado", 14, 85);
+                }
+                
+                doc.setFontSize(14);
+                doc.text("Serviços Extras", 14, doc.autoTable.previous.finalY + 15);
+                
+                const extras = [];
+                document.querySelectorAll("#extras-table tbody tr").forEach(row => {
+                    extras.push([
+                        row.cells[0].textContent,
+                        row.cells[1].textContent,
+                        row.cells[2].textContent
+                    ]);
                 });
-            } else {
-                doc.text("Nenhum serviço extra registrado", 14, doc.autoTable.previous.finalY + 20);
+                
+                if (extras.length > 0) {
+                    doc.autoTable({
+                        startY: doc.autoTable.previous.finalY + 20,
+                        head: [["Data", "Serviço", "Valor"]],
+                        body: extras,
+                        theme: "grid"
+                    });
+                } else {
+                    doc.text("Nenhum serviço extra registrado", 14, doc.autoTable.previous.finalY + 20);
+                }
+                
+                doc.setFontSize(14);
+                doc.text("Resumo Financeiro", 14, doc.autoTable.previous.finalY + 30);
+                
+                doc.setFontSize(12);
+                doc.text(`Valor da Obra: ${document.getElementById("project-value-display").textContent}`, 14, doc.autoTable.previous.finalY + 40);
+                doc.text(`Total Serviços Extras: ${document.getElementById("total-extras").textContent}`, 14, doc.autoTable.previous.finalY + 50);
+                doc.text(`Valor Total: ${document.getElementById("total-value").textContent}`, 14, doc.autoTable.previous.finalY + 60);
+                doc.text(`Total Vales Recebidos: ${document.getElementById("total-received").textContent}`, 14, doc.autoTable.previous.finalY + 70);
+                
+                const balance = document.getElementById("balance").textContent;
+                const balanceColor = document.getElementById("balance").style.color;
+                
+                doc.setTextColor(balanceColor === 'rgb(46, 204, 113)' ? 46 : 231, balanceColor === 'rgb(46, 204, 113)' ? 204 : 76, balanceColor === 'rgb(46, 204, 113)' ? 113 : 60);
+                doc.text(`Saldo: ${balance}`, 14, doc.autoTable.previous.finalY + 80);
+                
+                doc.save(`Relatorio_Construtora_JHS_${new Date().toLocaleDateString("pt-BR")}.pdf`);
+                showToast("Relatório PDF gerado com sucesso!");
+            } catch (error) {
+                console.error("Erro ao gerar PDF:", error);
+                showToast("Erro ao gerar relatório PDF", true);
             }
-            
-            doc.setFontSize(14);
-            doc.text("Resumo Financeiro", 14, doc.autoTable.previous.finalY + 30);
-            
-            doc.setFontSize(12);
-            doc.text(`Valor da Obra: ${document.getElementById("project-value-display").textContent}`, 14, doc.autoTable.previous.finalY + 40);
-            doc.text(`Total Serviços Extras: ${document.getElementById("total-extras").textContent}`, 14, doc.autoTable.previous.finalY + 50);
-            doc.text(`Valor Total: ${document.getElementById("total-value").textContent}`, 14, doc.autoTable.previous.finalY + 60);
-            doc.text(`Total Vales Recebidos: ${document.getElementById("total-received").textContent}`, 14, doc.autoTable.previous.finalY + 70);
-            
-            const balance = document.getElementById("balance").textContent;
-            const balanceColor = document.getElementById("balance").style.color;
-            
-            doc.setTextColor(balanceColor === 'rgb(46, 204, 113)' ? 46 : 231, balanceColor === 'rgb(46, 204, 113)' ? 204 : 76, balanceColor === 'rgb(46, 204, 113)' ? 113 : 60);
-            doc.text(`Saldo: ${balance}`, 14, doc.autoTable.previous.finalY + 80);
-            
-            doc.save(`Relatorio_Construtora_JHS_${new Date().toLocaleDateString("pt-BR")}.pdf`);
         }
 
         // Configurar botões de exclusão
@@ -518,11 +556,18 @@
 
         // Carregar todos os dados
         async function loadAllData() {
-            await loadProjectData();
-            await loadPayments();
-            await loadExtras();
-            await loadReceipts();
-            await updateReport();
+            try {
+                console.log("Iniciando carregamento de todos os dados..."); // Log para depuração
+                await loadProjectData();
+                await loadPayments();
+                await loadExtras();
+                await loadReceipts();
+                await updateReport();
+                console.log("Todos os dados carregados com sucesso.");
+            } catch (error) {
+                console.error("Erro ao carregar todos os dados:", error);
+                showToast("Erro ao carregar dados", true);
+            }
         }
 
         // Formatadores
@@ -532,6 +577,7 @@
                 const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
                 return date.toLocaleDateString("pt-BR");
             } catch (e) {
+                console.error("Erro ao formatar data:", e, dateString);
                 return "Data inválida";
             }
         }
