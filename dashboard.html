@@ -64,6 +64,7 @@
                 }
             } catch (error) {
                 console.error("Erro ao carregar obra:", error);
+                showToast("Erro ao carregar dados da obra", true);
             }
         }
 
@@ -79,10 +80,11 @@
                 };
 
                 await setDoc(doc(db, "projects", currentUser.uid), projectData);
-                alert("Informações da obra salvas com sucesso!");
+                showToast("Informações da obra salvas com sucesso!");
                 updateReport();
             } catch (error) {
                 console.error("Erro ao salvar obra:", error);
+                showToast("Erro ao salvar informações da obra", true);
             }
         });
 
@@ -117,30 +119,41 @@
                 setupDeleteButtons();
             } catch (error) {
                 console.error("Erro ao carregar vales:", error);
+                showToast("Erro ao carregar vales recebidos", true);
             }
         }
 
         document.getElementById("add-payment-btn").addEventListener("click", async () => {
             try {
+                const paymentValue = parseFloat(document.getElementById("payment-value").value);
+                const paymentDate = document.getElementById("payment-date").value;
+                const paymentDescription = document.getElementById("payment-description").value;
+
+                if (!paymentDate || !paymentDescription || isNaN(paymentValue) || paymentValue <= 0) {
+                    showToast("Preencha todos os campos corretamente!", true);
+                    return;
+                }
+
                 const paymentData = {
-                    value: parseFloat(document.getElementById("payment-value").value) || 0,
-                    date: document.getElementById("payment-date").value,
-                    description: document.getElementById("payment-description").value,
+                    value: paymentValue,
+                    date: paymentDate,
+                    description: paymentDescription,
                     userId: currentUser.uid,
                     createdAt: new Date()
                 };
 
-                if (!paymentData.date || !paymentData.description) {
-                    alert("Preencha todos os campos!");
-                    return;
-                }
-
                 await addDoc(collection(db, "payments"), paymentData);
+                
+                // Limpar campos
                 document.getElementById("payment-value").value = "";
+                document.getElementById("payment-date").value = "";
                 document.getElementById("payment-description").value = "";
+                
+                showToast("Vale recebido cadastrado com sucesso!");
                 loadPayments();
             } catch (error) {
                 console.error("Erro ao adicionar vale:", error);
+                showToast("Erro ao cadastrar vale recebido", true);
             }
         });
 
@@ -175,30 +188,41 @@
                 setupDeleteButtons();
             } catch (error) {
                 console.error("Erro ao carregar serviços extras:", error);
+                showToast("Erro ao carregar serviços extras", true);
             }
         }
 
         document.getElementById("add-extra-btn").addEventListener("click", async () => {
             try {
+                const extraService = document.getElementById("extra-service").value;
+                const extraValue = parseFloat(document.getElementById("extra-value").value);
+                const extraDate = document.getElementById("extra-date").value;
+
+                if (!extraDate || !extraService || isNaN(extraValue) || extraValue <= 0) {
+                    showToast("Preencha todos os campos corretamente!", true);
+                    return;
+                }
+
                 const extraData = {
-                    service: document.getElementById("extra-service").value,
-                    value: parseFloat(document.getElementById("extra-value").value) || 0,
-                    date: document.getElementById("extra-date").value,
+                    service: extraService,
+                    value: extraValue,
+                    date: extraDate,
                     userId: currentUser.uid,
                     createdAt: new Date()
                 };
 
-                if (!extraData.date || !extraData.service) {
-                    alert("Preencha todos os campos!");
-                    return;
-                }
-
                 await addDoc(collection(db, "extras"), extraData);
+                
+                // Limpar campos
                 document.getElementById("extra-service").value = "";
                 document.getElementById("extra-value").value = "";
+                document.getElementById("extra-date").value = "";
+                
+                showToast("Serviço extra cadastrado com sucesso!");
                 loadExtras();
             } catch (error) {
                 console.error("Erro ao adicionar serviço extra:", error);
+                showToast("Erro ao cadastrar serviço extra", true);
             }
         });
 
@@ -255,6 +279,7 @@
                 setupDeleteButtons();
             } catch (error) {
                 console.error("Erro ao carregar comprovantes:", error);
+                showToast("Erro ao carregar comprovantes", true);
             }
         }
 
@@ -263,7 +288,7 @@
                 const description = document.getElementById("receipt-description").value;
                 
                 if (!description || !selectedFile) {
-                    alert("Preencha todos os campos e selecione um arquivo!");
+                    showToast("Preencha todos os campos e selecione um arquivo!", true);
                     return;
                 }
 
@@ -280,19 +305,24 @@
 
                 await addDoc(collection(db, "receipts"), receiptData);
                 
+                // Limpar campos
                 document.getElementById("receipt-description").value = "";
                 document.getElementById("receipt-file").value = "";
                 document.getElementById("file-name").textContent = "Nenhum arquivo selecionado";
                 document.getElementById("receipt-preview").style.display = "none";
                 selectedFile = null;
+                
+                showToast("Comprovante cadastrado com sucesso!");
                 loadReceipts();
             } catch (error) {
                 console.error("Erro ao salvar comprovante:", error);
+                showToast("Erro ao cadastrar comprovante", true);
             }
         });
 
         // 5. Relatório e Funções Auxiliares
         function updateReport() {
+            // Obter valor da obra (convertendo para número)
             const projectValue = parseFloat(document.getElementById("project-value").value) || 0;
             
             // Calcular total de vales recebidos
@@ -312,26 +342,35 @@
             // Calcular valor total (obra + extras)
             const totalValue = projectValue + totalExtras;
             
-            // Atualizar os elementos na tela
+            // Atualizar a exibição na tela
             document.getElementById("project-value-display").textContent = formatCurrency(projectValue);
             document.getElementById("total-extras").textContent = formatCurrency(totalExtras);
             document.getElementById("total-value").textContent = formatCurrency(totalValue);
             document.getElementById("total-received").textContent = formatCurrency(totalReceived);
             
-            // Calcular saldo
+            // Calcular saldo (valor total - vales recebidos)
             const balance = totalValue - totalReceived;
             const balanceElement = document.getElementById("balance");
             balanceElement.textContent = formatCurrency(balance);
             
             // Aplicar cor conforme o saldo
-            if (totalReceived <= totalValue) {
-                balanceElement.style.color = '#2ecc71'; // Verde
-            } else {
-                balanceElement.style.color = '#e74c3c'; // Vermelho
-            }
+            balanceElement.style.color = balance >= 0 ? '#2ecc71' : '#e74c3c';
         }
 
-        document.getElementById("generate-pdf-btn").addEventListener("click", generatePDFReport);
+        // Função para mostrar mensagens temporárias
+        function showToast(message, isError = false) {
+            const toast = document.createElement("div");
+            toast.className = "toast " + (isError ? "error" : "success");
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add("fade-out");
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 3000);
+        }
 
         function generatePDFReport() {
             const doc = new jsPDF();
@@ -428,9 +467,11 @@
                     if (confirm("Tem certeza que deseja excluir este vale?")) {
                         try {
                             await deleteDoc(doc(db, "payments", id));
+                            showToast("Vale excluído com sucesso!");
                             loadPayments();
                         } catch (error) {
                             console.error("Erro ao excluir vale:", error);
+                            showToast("Erro ao excluir vale", true);
                         }
                     }
                 });
@@ -443,9 +484,11 @@
                     if (confirm("Tem certeza que deseja excluir este serviço extra?")) {
                         try {
                             await deleteDoc(doc(db, "extras", id));
+                            showToast("Serviço extra excluído com sucesso!");
                             loadExtras();
                         } catch (error) {
                             console.error("Erro ao excluir serviço extra:", error);
+                            showToast("Erro ao excluir serviço extra", true);
                         }
                     }
                 });
@@ -467,10 +510,12 @@
                                     await deleteObject(fileRef);
                                 }
                                 await deleteDoc(docRef);
+                                showToast("Comprovante excluído com sucesso!");
                                 loadReceipts();
                             }
                         } catch (error) {
                             console.error("Erro ao excluir comprovante:", error);
+                            showToast("Erro ao excluir comprovante", true);
                         }
                     }
                 });
@@ -482,6 +527,7 @@
             loadPayments();
             loadExtras();
             loadReceipts();
+            updateReport();
         }
 
         function formatDate(dateString) {
@@ -500,6 +546,9 @@
                 currency: "BRL"
             }).format(value);
         }
+
+        // Inicializa o relatório quando a página carrega
+        updateReport();
     </script>
     
     <!-- Biblioteca para PDF -->
@@ -638,6 +687,38 @@
             max-height: 200px;
             margin-top: 10px;
             display: none;
+        }
+
+        /* Estilos para as mensagens toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: var(--success);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.5s forwards;
+        }
+
+        .toast.error {
+            background-color: var(--danger);
+        }
+
+        .toast.fade-out {
+            animation: fadeOut 0.5s forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
         }
     </style>
 </head>
