@@ -5,129 +5,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construtora JHS - Login</title>
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (OBRIGATÓRIO) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     
     <style>
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #bdc3c7; /* Fundo cinza */
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
         }
-        
-        .login-container {
+        .login-box {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2); /* Sombra 3D */
-            width: 90%;
-            max-width: 400px;
             padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 300px;
             text-align: center;
         }
-        
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #34495e;
-            font-weight: 500;
-        }
-        
-        .input-group input {
+        input {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
+            margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
         }
-        
-        .btn {
-            background: #3498db;
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #4CAF50;
             color: white;
             border: none;
-            padding: 12px 20px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-            margin-top: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s;
         }
-        
-        .btn:hover {
-            background: #2980b9;
-            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        .error {
+            color: red;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="login-box">
         <h1>Construtora JHS</h1>
-        
-        <div class="input-group">
-            <label for="email">E-mail</label>
-            <input type="email" id="email" placeholder="seu@email.com">
-        </div>
-        
-        <div class="input-group">
-            <label for="password">Senha</label>
-            <input type="password" id="password" placeholder="Sua senha">
-        </div>
-        
-        <button id="login-btn" class="btn">Entrar</button>
-        <button id="register-btn" class="btn">Cadastrar</button>
-        
-        <div id="error-message" style="color: red; margin-top: 15px;"></div>
+        <input type="email" id="email" placeholder="Seu e-mail">
+        <input type="password" id="password" placeholder="Sua senha">
+        <button id="login-btn">Entrar</button>
+        <button id="register-btn">Cadastrar</button>
+        <div id="error-message" class="error"></div>
     </div>
 
     <script>
-        // Configuração do Firebase (SUA CONFIGURAÇÃO AQUI)
+        // CONFIGURAÇÃO DO FIREBASE (SUA CONFIG AQUI!)
         const firebaseConfig = {
-            apiKey: "SUA_CHAVE_DE_API_VALIDA",
+            apiKey: "AIzaSyC5cnKYsZ5wCI8Aeho0KEmeFTSxtDd0AkY",
             authDomain: "construtora-jhs-2693d.firebaseapp.com",
             projectId: "construtora-jhs-2693d",
             storageBucket: "construtora-jhs-2693d.appspot.com",
             messagingSenderId: "358435009217",
             appId: "1:358435009217:web:2e11ec33ee15a8b7ac9a40"
         };
-
-        // Inicialização do Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        
+        // INICIALIZA O FIREBASE
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-
-        // Login (MANTIDO ORIGINAL)
+        
+        // LOGIN
         document.getElementById("login-btn").addEventListener("click", () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
             
             auth.signInWithEmailAndPassword(email, password)
-                .then(() => window.location.href = "dashboard.html")
-                .catch(error => {
+                .then(() => {
+                    window.location.href = "dashboard.html";
+                })
+                .catch((error) => {
                     document.getElementById("error-message").textContent = error.message;
                 });
         });
-
-        // Cadastro (MANTIDO ORIGINAL)
+        
+        // CADASTRO
         document.getElementById("register-btn").addEventListener("click", () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
             
             auth.createUserWithEmailAndPassword(email, password)
-                .then(() => window.location.href = "dashboard.html")
-                .catch(error => {
+                .then(() => {
+                    window.location.href = "dashboard.html";
+                })
+                .catch((error) => {
                     document.getElementById("error-message").textContent = error.message;
                 });
         });
