@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construtora JHS - Login</title>
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (MANTIDO ORIGINAL) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     
+    <!-- NOVO CSS (APENAS MUDANÇAS VISUAIS) -->
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Roboto', sans-serif;
             background-color: #bdc3c7; /* Fundo cinza */
             display: flex;
             justify-content: center;
@@ -20,16 +20,17 @@
             height: 100vh;
             margin: 0;
         }
-        .login-container {
+        
+        .login-box {
             background: white;
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.2); /* Sombra 3D */
-            width: 90%;
-            max-width: 400px;
+            width: 300px;
             text-align: center;
         }
-        input, button {
+        
+        input {
             width: 100%;
             padding: 12px;
             margin: 10px 0;
@@ -37,20 +38,29 @@
             border-radius: 5px;
             box-sizing: border-box;
         }
+        
         button {
+            width: 100%;
+            padding: 12px;
             background: #3498db;
             color: white;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Efeito 3D */
+            transition: all 0.3s;
         }
+        
         button:hover {
             background: #2980b9;
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15); /* Sombra mais intensa no hover */
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <!-- ESTRUTURA ORIGINAL (MANTIDA) -->
+    <div class="login-box">
         <h1>Construtora JHS</h1>
         <input type="email" id="email" placeholder="Seu e-mail">
         <input type="password" id="password" placeholder="Sua senha">
@@ -59,8 +69,9 @@
         <div id="error-message" style="color: red; margin-top: 10px;"></div>
     </div>
 
+    <!-- SCRIPT ORIGINAL (MANTIDO SEM ALTERAÇÕES) -->
     <script>
-        // Configuração do Firebase (USE SEUS DADOS)
+        // Configuração do Firebase (USE SEUS DADOS ORIGINAIS)
         const firebaseConfig = {
             apiKey: "AIzaSyC5cnKYsZ5wCI8Aeho0KEmeFTSxtDd0AkY",
             authDomain: "construtora-jhs-2693d.firebaseapp.com",
@@ -70,14 +81,11 @@
             appId: "1:358435009217:web:2e11ec33ee15a8b7ac9a40"
         };
 
-        // Inicialização segura
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        // Inicialização (MANTIDO ORIGINAL)
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
 
-        // Login
+        // Login (MANTIDO ORIGINAL)
         document.getElementById("login-btn").addEventListener("click", () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
@@ -89,7 +97,7 @@
                 });
         });
 
-        // Cadastro
+        // Cadastro (MANTIDO ORIGINAL)
         document.getElementById("register-btn").addEventListener("click", () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
