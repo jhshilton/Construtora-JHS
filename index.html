@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construtora JHS - Login</title>
     
-    <!-- Firebase SDK (MANTIDO ORIGINAL) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     
-    <!-- NOVO CSS (APENAS MUDANÇAS VISUAIS) -->
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -21,59 +20,81 @@
             margin: 0;
         }
         
-        .login-box {
+        .login-container {
             background: white;
-            padding: 30px;
             border-radius: 10px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.2); /* Sombra 3D */
-            width: 300px;
+            width: 90%;
+            max-width: 400px;
+            padding: 30px;
             text-align: center;
         }
         
-        input {
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #34495e;
+            font-weight: 500;
+        }
+        
+        .input-group input {
             width: 100%;
             padding: 12px;
-            margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 5px;
+            font-size: 16px;
             box-sizing: border-box;
         }
         
-        button {
-            width: 100%;
-            padding: 12px;
+        .btn {
             background: #3498db;
             color: white;
             border: none;
+            padding: 12px 20px;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
+            width: 100%;
             margin-top: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Efeito 3D */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             transition: all 0.3s;
         }
         
-        button:hover {
+        .btn:hover {
             background: #2980b9;
-            box-shadow: 0 6px 8px rgba(0,0,0,0.15); /* Sombra mais intensa no hover */
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
         }
     </style>
 </head>
 <body>
-    <!-- ESTRUTURA ORIGINAL (MANTIDA) -->
-    <div class="login-box">
+    <div class="login-container">
         <h1>Construtora JHS</h1>
-        <input type="email" id="email" placeholder="Seu e-mail">
-        <input type="password" id="password" placeholder="Sua senha">
-        <button id="login-btn">Entrar</button>
-        <button id="register-btn">Cadastrar</button>
-        <div id="error-message" style="color: red; margin-top: 10px;"></div>
+        
+        <div class="input-group">
+            <label for="email">E-mail</label>
+            <input type="email" id="email" placeholder="seu@email.com">
+        </div>
+        
+        <div class="input-group">
+            <label for="password">Senha</label>
+            <input type="password" id="password" placeholder="Sua senha">
+        </div>
+        
+        <button id="login-btn" class="btn">Entrar</button>
+        <button id="register-btn" class="btn">Cadastrar</button>
+        
+        <div id="error-message" style="color: red; margin-top: 15px;"></div>
     </div>
 
-    <!-- SCRIPT ORIGINAL (MANTIDO SEM ALTERAÇÕES) -->
     <script>
-        // Configuração do Firebase (USE SEUS DADOS ORIGINAIS)
+        // Configuração do Firebase (SUA CONFIGURAÇÃO AQUI)
         const firebaseConfig = {
-            apiKey: "AIzaSyC5cnKYsZ5wCI8Aeho0KEmeFTSxtDd0AkY",
+            apiKey: "SUA_CHAVE_DE_API_VALIDA",
             authDomain: "construtora-jhs-2693d.firebaseapp.com",
             projectId: "construtora-jhs-2693d",
             storageBucket: "construtora-jhs-2693d.appspot.com",
@@ -81,8 +102,10 @@
             appId: "1:358435009217:web:2e11ec33ee15a8b7ac9a40"
         };
 
-        // Inicialização (MANTIDO ORIGINAL)
-        firebase.initializeApp(firebaseConfig);
+        // Inicialização do Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
 
         // Login (MANTIDO ORIGINAL)
