@@ -72,7 +72,7 @@
             try {
                 const projectData = {
                     name: document.getElementById("project-name").value,
-                    value: parseFloat(document.getElementById("project-value").value) || 0,
+                    value: parseFloat(document.getElementById("project-value").value.replace(",", ".")) || 0,
                     startDate: document.getElementById("project-start").value,
                     description: document.getElementById("project-description").value,
                     userId: currentUser.uid,
@@ -106,8 +106,8 @@
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${formatDate(payment.date)}</td>
-                        <td>${payment.description}</td>
-                        <td>${formatCurrency(payment.value)}</td>
+                        <td>${payment.description || ""}</td>
+                        <td>${formatCurrency(payment.value || 0)}</td>
                         <td>
                             <button class="btn-danger delete-payment" data-id="${doc.id}">Excluir</button>
                         </td>
@@ -125,17 +125,17 @@
 
         document.getElementById("add-payment-btn").addEventListener("click", async () => {
             try {
-                const paymentValue = parseFloat(document.getElementById("payment-value").value);
+                const paymentValue = document.getElementById("payment-value").value.replace(",", ".");
                 const paymentDate = document.getElementById("payment-date").value;
                 const paymentDescription = document.getElementById("payment-description").value;
 
-                if (!paymentDate || !paymentDescription || isNaN(paymentValue) || paymentValue <= 0) {
+                if (!paymentDate || !paymentDescription || !paymentValue) {
                     showToast("Preencha todos os campos corretamente!", true);
                     return;
                 }
 
                 const paymentData = {
-                    value: paymentValue,
+                    value: parseFloat(paymentValue),
                     date: paymentDate,
                     description: paymentDescription,
                     userId: currentUser.uid,
@@ -175,8 +175,8 @@
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${formatDate(extra.date)}</td>
-                        <td>${extra.service}</td>
-                        <td>${formatCurrency(extra.value)}</td>
+                        <td>${extra.service || ""}</td>
+                        <td>${formatCurrency(extra.value || 0)}</td>
                         <td>
                             <button class="btn-danger delete-extra" data-id="${doc.id}">Excluir</button>
                         </td>
@@ -195,17 +195,17 @@
         document.getElementById("add-extra-btn").addEventListener("click", async () => {
             try {
                 const extraService = document.getElementById("extra-service").value;
-                const extraValue = parseFloat(document.getElementById("extra-value").value);
+                const extraValue = document.getElementById("extra-value").value.replace(",", ".");
                 const extraDate = document.getElementById("extra-date").value;
 
-                if (!extraDate || !extraService || isNaN(extraValue) || extraValue <= 0) {
+                if (!extraDate || !extraService || !extraValue) {
                     showToast("Preencha todos os campos corretamente!", true);
                     return;
                 }
 
                 const extraData = {
                     service: extraService,
-                    value: extraValue,
+                    value: parseFloat(extraValue),
                     date: extraDate,
                     userId: currentUser.uid,
                     createdAt: new Date()
@@ -320,35 +320,36 @@
             }
         });
 
-        // 5. Relatório e Funções Auxiliares
+        // 5. Relatório Financeiro
         function updateReport() {
-            // Obter valor da obra (convertendo para número)
-            const projectValue = parseFloat(document.getElementById("project-value").value) || 0;
+            const projectValue = parseFloat(document.getElementById("project-value").value.replace(",", ".")) || 0;
             
             // Calcular total de vales recebidos
             let totalReceived = 0;
             document.querySelectorAll("#payments-table tbody tr").forEach(row => {
-                const valueText = row.cells[2].textContent.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
-                totalReceived += parseFloat(valueText) || 0;
+                const valueText = row.cells[2].textContent;
+                const value = parseFloat(valueText.replace(/[^\d,-]/g, "").replace(",", ".")) || 0;
+                totalReceived += value;
             });
             
             // Calcular total de serviços extras
             let totalExtras = 0;
             document.querySelectorAll("#extras-table tbody tr").forEach(row => {
-                const valueText = row.cells[2].textContent.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
-                totalExtras += parseFloat(valueText) || 0;
+                const valueText = row.cells[2].textContent;
+                const value = parseFloat(valueText.replace(/[^\d,-]/g, "").replace(",", ".")) || 0;
+                totalExtras += value;
             });
             
             // Calcular valor total (obra + extras)
             const totalValue = projectValue + totalExtras;
             
-            // Atualizar a exibição na tela
+            // Atualizar os elementos na tela
             document.getElementById("project-value-display").textContent = formatCurrency(projectValue);
             document.getElementById("total-extras").textContent = formatCurrency(totalExtras);
             document.getElementById("total-value").textContent = formatCurrency(totalValue);
             document.getElementById("total-received").textContent = formatCurrency(totalReceived);
             
-            // Calcular saldo (valor total - vales recebidos)
+            // Calcular saldo
             const balance = totalValue - totalReceived;
             const balanceElement = document.getElementById("balance");
             balanceElement.textContent = formatCurrency(balance);
@@ -357,20 +358,8 @@
             balanceElement.style.color = balance >= 0 ? '#2ecc71' : '#e74c3c';
         }
 
-        // Função para mostrar mensagens temporárias
-        function showToast(message, isError = false) {
-            const toast = document.createElement("div");
-            toast.className = "toast " + (isError ? "error" : "success");
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.add("fade-out");
-                setTimeout(() => {
-                    document.body.removeChild(toast);
-                }, 500);
-            }, 3000);
-        }
+        // Gerar PDF do relatório
+        document.getElementById("generate-pdf-btn").addEventListener("click", generatePDFReport);
 
         function generatePDFReport() {
             const doc = new jsPDF();
@@ -459,6 +448,7 @@
             doc.save(`Relatorio_Construtora_JHS_${new Date().toLocaleDateString("pt-BR")}.pdf`);
         }
 
+        // Configurar botões de exclusão
         function setupDeleteButtons() {
             // Vales
             document.querySelectorAll(".delete-payment").forEach(btn => {
@@ -522,6 +512,7 @@
             });
         }
 
+        // Carregar todos os dados
         function loadAllData() {
             loadProjectData();
             loadPayments();
@@ -530,6 +521,7 @@
             updateReport();
         }
 
+        // Formatadores
         function formatDate(dateString) {
             if (!dateString) return "Não informado";
             try {
@@ -541,14 +533,31 @@
         }
 
         function formatCurrency(value) {
+            // Converte para número se for string
+            const numValue = typeof value === 'string' ? 
+                parseFloat(value.replace(",", ".")) : 
+                Number(value);
+            
             return new Intl.NumberFormat("pt-BR", {
                 style: "currency",
                 currency: "BRL"
-            }).format(value);
+            }).format(isNaN(numValue) ? 0 : numValue);
         }
 
-        // Inicializa o relatório quando a página carrega
-        updateReport();
+        // Mostrar mensagens toast
+        function showToast(message, isError = false) {
+            const toast = document.createElement("div");
+            toast.className = "toast " + (isError ? "error" : "success");
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add("fade-out");
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 3000);
+        }
     </script>
     
     <!-- Biblioteca para PDF -->
@@ -738,7 +747,7 @@
             </div>
             <div class="form-group">
                 <label for="project-value">Valor do Serviço (R$)</label>
-                <input type="number" id="project-value" placeholder="0,00" step="0.01">
+                <input type="text" id="project-value" placeholder="0,00" oninput="formatCurrencyInput(this)">
             </div>
             <div class="form-group">
                 <label for="project-start">Data de Início</label>
@@ -756,7 +765,7 @@
             <h2>Vales Recebidos</h2>
             <div class="form-group">
                 <label for="payment-value">Valor (R$)</label>
-                <input type="number" id="payment-value" placeholder="0,00" step="0.01">
+                <input type="text" id="payment-value" placeholder="0,00" oninput="formatCurrencyInput(this)">
             </div>
             <div class="form-group">
                 <label for="payment-date">Data</label>
@@ -790,7 +799,7 @@
             </div>
             <div class="form-group">
                 <label for="extra-value">Valor (R$)</label>
-                <input type="number" id="extra-value" placeholder="0,00" step="0.01">
+                <input type="text" id="extra-value" placeholder="0,00" oninput="formatCurrencyInput(this)">
             </div>
             <div class="form-group">
                 <label for="extra-date">Data</label>
@@ -855,5 +864,22 @@
             <button id="generate-pdf-btn" class="btn-success">Gerar PDF</button>
         </div>
     </div>
+
+    <script>
+        // Função para formatar campos monetários durante a digitação
+        function formatCurrencyInput(input) {
+            // Remove tudo que não é dígito
+            let value = input.value.replace(/\D/g, "");
+            
+            // Adiciona zeros à esquerda se necessário
+            value = value.padStart(3, "0");
+            
+            // Formata como moeda brasileira
+            value = value.replace(/(\d)(\d{2})$/, "$1,$2");
+            value = value.replace(/(?=(\d{3})+(\D))\B/g, ".");
+            
+            input.value = value;
+        }
+    </script>
 </body>
 </html>
