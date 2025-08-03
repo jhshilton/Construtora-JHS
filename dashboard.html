@@ -11,126 +11,928 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     
+    <!-- Biblioteca para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --light-gray: #ecf0f1;
+            --dark-gray: #bdc3c7;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--dark-gray);
             margin: 0;
             padding: 0;
-            background: #f0f0f0;
+            min-height: 100vh;
         }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
         header {
-            background: #2c3e50;
+            background-color: var(--primary-color);
             color: white;
-            padding: 15px;
+            padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
-        .container {
-            max-width: 1000px;
-            margin: 20px auto;
-            padding: 0 15px;
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 500;
         }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-email {
+            margin-right: 15px;
+        }
+        
+        .logout-btn {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
         .card {
-            background: white;
+            background-color: white;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             padding: 20px;
             margin-bottom: 20px;
         }
-        button {
-            padding: 10px 15px;
-            background: #4CAF50;
+        
+        .card-title {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .btn {
+            background-color: var(--accent-color);
             color: white;
             border: none;
-            border-radius: 4px;
+            padding: 10px 15px;
+            border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-        .logout-btn {
-            background: #e74c3c;
+        
+        .btn:hover {
+            background-color: #2980b9;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--light-gray);
+            color: var(--secondary-color);
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            margin-right: 5px;
+            font-size: 14px;
+        }
+        
+        .total-display {
+            font-size: 18px;
+            font-weight: 500;
+            margin-top: 15px;
+            text-align: right;
+        }
+        
+        .positive {
+            color: var(--success-color);
+        }
+        
+        .negative {
+            color: var(--danger-color);
+        }
+        
+        .file-upload {
+            display: flex;
+            align-items: center;
+        }
+        
+        .file-upload input[type="file"] {
+            display: none;
+        }
+        
+        .file-upload-label {
+            background-color: var(--light-gray);
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .file-name {
+            color: #7f8c8d;
+        }
+        
+        .receipt-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .user-info {
+                margin-top: 10px;
+                flex-direction: column;
+            }
+            
+            .user-email {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>Construtora JHS</h1>
-        <button class="logout-btn" id="logout-btn">Sair</button>
+        <div class="logo">Construtora JHS</div>
+        <div class="user-info">
+            <span class="user-email" id="user-email"></span>
+            <button class="logout-btn" id="logout-btn">Sair</button>
+        </div>
     </header>
     
     <div class="container">
-        <!-- INFORMAÇÕES DA OBRA -->
+        <!-- Informações da Obra -->
         <div class="card">
-            <h2>Informações da Obra</h2>
-            <input type="text" id="obra-nome" placeholder="Nome da Obra">
-            <input type="number" id="obra-valor" placeholder="Valor (R$)">
-            <input type="date" id="obra-data">
-            <button id="salvar-obra">Salvar</button>
+            <h2 class="card-title">Informações da Obra</h2>
+            <div class="form-group">
+                <label for="project-name">Nome da Obra</label>
+                <input type="text" id="project-name" class="form-control" placeholder="Ex: Casa Residencial">
+            </div>
+            <div class="form-group">
+                <label for="project-value">Valor do Serviço (R$)</label>
+                <input type="number" id="project-value" class="form-control" placeholder="0,00" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="project-start">Data de Início</label>
+                <input type="date" id="project-start" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="project-description">Descrição</label>
+                <textarea id="project-description" class="form-control" rows="3" placeholder="Breve descrição da obra"></textarea>
+            </div>
+            <button id="save-project-btn" class="btn">Salvar Informações</button>
         </div>
         
-        <!-- VALES RECEBIDOS -->
+        <!-- Vales Recebidos -->
         <div class="card">
-            <h2>Vales Recebidos</h2>
-            <input type="number" id="vale-valor" placeholder="Valor (R$)">
-            <input type="date" id="vale-data">
-            <button id="add-vale">Adicionar Vale</button>
+            <h2 class="card-title">Vales Recebidos</h2>
+            <div class="form-group">
+                <label for="payment-value">Valor (R$)</label>
+                <input type="number" id="payment-value" class="form-control" placeholder="0,00" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="payment-date">Data</label>
+                <input type="date" id="payment-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="payment-description">Descrição</label>
+                <input type="text" id="payment-description" class="form-control" placeholder="Ex: Primeiro vale">
+            </div>
+            <button id="add-payment-btn" class="btn">Adicionar Vale</button>
+            
+            <table id="payments-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Valor (R$)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Os vales serão inseridos aqui dinamicamente -->
+                </tbody>
+            </table>
+            
+            <div class="total-display">
+                Total Recebido: <span id="total-received">R$ 0,00</span>
+            </div>
+        </div>
+        
+        <!-- Serviços Extras -->
+        <div class="card">
+            <h2 class="card-title">Serviços Extras</h2>
+            <div class="form-group">
+                <label for="extra-service">Descrição do Serviço</label>
+                <input type="text" id="extra-service" class="form-control" placeholder="Ex: Construção de muro">
+            </div>
+            <div class="form-group">
+                <label for="extra-value">Valor (R$)</label>
+                <input type="number" id="extra-value" class="form-control" placeholder="0,00" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="extra-date">Data</label>
+                <input type="date" id="extra-date" class="form-control">
+            </div>
+            <button id="add-extra-btn" class="btn">Adicionar Serviço</button>
+            
+            <table id="extras-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Serviço</th>
+                        <th>Valor (R$)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Os serviços extras serão inseridos aqui dinamicamente -->
+                </tbody>
+            </table>
+            
+            <div class="total-display">
+                Total Serviços Extras: <span id="total-extras">R$ 0,00</span>
+            </div>
+        </div>
+        
+        <!-- Comprovantes PIX -->
+        <div class="card">
+            <h2 class="card-title">Comprovantes PIX</h2>
+            <div class="form-group">
+                <label for="receipt-description">Descrição</label>
+                <input type="text" id="receipt-description" class="form-control" placeholder="Ex: Comprovante do vale 1">
+            </div>
+            <div class="form-group">
+                <label for="receipt-date">Data</label>
+                <input type="date" id="receipt-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Comprovante</label>
+                <div class="file-upload">
+                    <label for="receipt-file" class="file-upload-label">Selecionar Arquivo</label>
+                    <span class="file-name" id="file-name">Nenhum arquivo selecionado</span>
+                    <input type="file" id="receipt-file" accept="image/*,.pdf">
+                </div>
+                <img id="receipt-preview" class="receipt-preview" alt="Pré-visualização">
+            </div>
+            <button id="add-receipt-btn" class="btn">Adicionar Comprovante</button>
+            
+            <table id="receipts-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Comprovante</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Os comprovantes serão inseridos aqui dinamicamente -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Relatório -->
+        <div class="card">
+            <h2 class="card-title">Relatório Financeiro</h2>
+            <div id="report-summary">
+                <p>Valor Total do Serviço: <span id="report-service-value">R$ 0,00</span></p>
+                <p>Total Recebido: <span id="report-total-received">R$ 0,00</span></p>
+                <p>Total Serviços Extras: <span id="report-total-extras">R$ 0,00</span></p>
+                <p>Saldo: <span id="report-balance">R$ 0,00</span></p>
+            </div>
+            <button id="generate-report-btn" class="btn btn-success">Gerar Relatório PDF</button>
         </div>
     </div>
 
     <script>
-        // CONFIG DO FIREBASE (MESMA DO INDEX.HTML)
+        // Configuração do Firebase (substitua com seus dados)
         const firebaseConfig = {
-            apiKey: "AIzaSyC5cnKYsZ5wCI8Aeho0KEmeFTSxtDd0AkY",
-            authDomain: "construtora-jhs-2693d.firebaseapp.com",
-            projectId: "construtora-jhs-2693d",
-            storageBucket: "construtora-jhs-2693d.appspot.com",
-            messagingSenderId: "358435009217",
-            appId: "1:358435009217:web:2e11ec33ee15a8b7ac9a40"
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            projectId: "SEU_PROJETO",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "SEU_SENDER_ID",
+            appId: "SEU_APP_ID"
         };
         
-        // INICIALIZA O FIREBASE
+        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const storage = firebase.storage();
         
-        // VERIFICA SE O USUÁRIO ESTÁ LOGADO
+        // Inicializa o jsPDF
+        const { jsPDF } = window.jspdf;
+        
+        // Elementos do DOM
+        const userEmailElement = document.getElementById('user-email');
+        const logoutBtn = document.getElementById('logout-btn');
+        
+        // Informações da Obra
+        const projectNameInput = document.getElementById('project-name');
+        const projectValueInput = document.getElementById('project-value');
+        const projectStartInput = document.getElementById('project-start');
+        const projectDescriptionInput = document.getElementById('project-description');
+        const saveProjectBtn = document.getElementById('save-project-btn');
+        
+        // Vales Recebidos
+        const paymentValueInput = document.getElementById('payment-value');
+        const paymentDateInput = document.getElementById('payment-date');
+        const paymentDescriptionInput = document.getElementById('payment-description');
+        const addPaymentBtn = document.getElementById('add-payment-btn');
+        const paymentsTableBody = document.querySelector('#payments-table tbody');
+        const totalReceivedElement = document.getElementById('total-received');
+        
+        // Serviços Extras
+        const extraServiceInput = document.getElementById('extra-service');
+        const extraValueInput = document.getElementById('extra-value');
+        const extraDateInput = document.getElementById('extra-date');
+        const addExtraBtn = document.getElementById('add-extra-btn');
+        const extrasTableBody = document.querySelector('#extras-table tbody');
+        const totalExtrasElement = document.getElementById('total-extras');
+        
+        // Comprovantes PIX
+        const receiptDescriptionInput = document.getElementById('receipt-description');
+        const receiptDateInput = document.getElementById('receipt-date');
+        const receiptFileInput = document.getElementById('receipt-file');
+        const fileNameElement = document.getElementById('file-name');
+        const receiptPreviewElement = document.getElementById('receipt-preview');
+        const addReceiptBtn = document.getElementById('add-receipt-btn');
+        const receiptsTableBody = document.querySelector('#receipts-table tbody');
+        
+        // Relatório
+        const reportServiceValueElement = document.getElementById('report-service-value');
+        const reportTotalReceivedElement = document.getElementById('report-total-received');
+        const reportTotalExtrasElement = document.getElementById('report-total-extras');
+        const reportBalanceElement = document.getElementById('report-balance');
+        const generateReportBtn = document.getElementById('generate-report-btn');
+        
+        // Variáveis globais
+        let currentUser = null;
+        let projectData = null;
+        let payments = [];
+        let extras = [];
+        let receipts = [];
+        let selectedFile = null;
+        
+        // Funções de formatação
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+        
+        // Verifica autenticação
         auth.onAuthStateChanged((user) => {
-            if (!user) {
-                window.location.href = "index.html";
+            if (user) {
+                currentUser = user;
+                userEmailElement.textContent = user.email;
+                loadProjectData();
+                loadPayments();
+                loadExtras();
+                loadReceipts();
+            } else {
+                window.location.href = 'index.html';
             }
         });
         
-        // BOTÃO DE SAIR
-        document.getElementById("logout-btn").addEventListener("click", () => {
+        // Logout
+        logoutBtn.addEventListener('click', () => {
             auth.signOut();
         });
         
-        // SALVAR INFORMAÇÕES DA OBRA
-        document.getElementById("salvar-obra").addEventListener("click", () => {
-            const obraData = {
-                nome: document.getElementById("obra-nome").value,
-                valor: document.getElementById("obra-valor").value,
-                data: document.getElementById("obra-data").value,
-                userId: auth.currentUser.uid
+        // Carrega dados do projeto
+        function loadProjectData() {
+            db.collection('projects').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        projectData = doc.data();
+                        projectNameInput.value = projectData.name || '';
+                        projectValueInput.value = projectData.value || '';
+                        projectStartInput.value = projectData.startDate || '';
+                        projectDescriptionInput.value = projectData.description || '';
+                        
+                        // Atualiza relatório
+                        updateReport();
+                    }
+                });
+        }
+        
+        // Salva dados do projeto
+        saveProjectBtn.addEventListener('click', () => {
+            const projectData = {
+                name: projectNameInput.value,
+                value: parseFloat(projectValueInput.value) || 0,
+                startDate: projectStartInput.value,
+                description: projectDescriptionInput.value,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            db.collection("obras").doc(auth.currentUser.uid).set(obraData)
+            db.collection('projects').doc(currentUser.uid).set(projectData, { merge: true })
                 .then(() => {
-                    alert("Obra salva com sucesso!");
+                    alert('Informações da obra salvas com sucesso!');
+                    updateReport();
+                })
+                .catch((error) => {
+                    alert('Erro ao salvar informações: ' + error.message);
                 });
         });
         
-        // ADICIONAR VALE
-        document.getElementById("add-vale").addEventListener("click", () => {
-            const valeData = {
-                valor: document.getElementById("vale-valor").value,
-                data: document.getElementById("vale-data").value,
-                userId: auth.currentUser.uid
+        // Carrega vales recebidos
+        function loadPayments() {
+            db.collection('payments').where('userId', '==', currentUser.uid).orderBy('date', 'desc').get()
+                .then((querySnapshot) => {
+                    payments = [];
+                    paymentsTableBody.innerHTML = '';
+                    let total = 0;
+                    
+                    querySnapshot.forEach((doc) => {
+                        const payment = doc.data();
+                        payment.id = doc.id;
+                        payments.push(payment);
+                        
+                        total += payment.value || 0;
+                        
+                        // Adiciona à tabela
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${formatDate(payment.date)}</td>
+                            <td>${payment.description}</td>
+                            <td>${formatCurrency(payment.value)}</td>
+                            <td>
+                                <button class="btn btn-danger action-btn delete-payment" data-id="${doc.id}">Excluir</button>
+                            </td>
+                        `;
+                        paymentsTableBody.appendChild(row);
+                    });
+                    
+                    totalReceivedElement.textContent = formatCurrency(total);
+                    updateReport();
+                    
+                    // Adiciona eventos aos botões de exclusão
+                    document.querySelectorAll('.delete-payment').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const paymentId = e.target.getAttribute('data-id');
+                            deletePayment(paymentId);
+                        });
+                    });
+                });
+        }
+        
+        // Adiciona vale
+        addPaymentBtn.addEventListener('click', () => {
+            const payment = {
+                userId: currentUser.uid,
+                value: parseFloat(paymentValueInput.value) || 0,
+                date: paymentDateInput.value,
+                description: paymentDescriptionInput.value,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            db.collection("vales").add(valeData)
+            if (!payment.date || !payment.description || payment.value <= 0) {
+                alert('Preencha todos os campos corretamente!');
+                return;
+            }
+            
+            db.collection('payments').add(payment)
                 .then(() => {
-                    alert("Vale adicionado!");
+                    paymentValueInput.value = '';
+                    paymentDescriptionInput.value = '';
+                    loadPayments();
+                })
+                .catch((error) => {
+                    alert('Erro ao adicionar vale: ' + error.message);
                 });
+        });
+        
+        // Exclui vale
+        function deletePayment(paymentId) {
+            if (confirm('Tem certeza que deseja excluir este vale?')) {
+                db.collection('payments').doc(paymentId).delete()
+                    .then(() => {
+                        loadPayments();
+                    })
+                    .catch((error) => {
+                        alert('Erro ao excluir vale: ' + error.message);
+                    });
+            }
+        }
+        
+        // Carrega serviços extras
+        function loadExtras() {
+            db.collection('extras').where('userId', '==', currentUser.uid).orderBy('date', 'desc').get()
+                .then((querySnapshot) => {
+                    extras = [];
+                    extrasTableBody.innerHTML = '';
+                    let total = 0;
+                    
+                    querySnapshot.forEach((doc) => {
+                        const extra = doc.data();
+                        extra.id = doc.id;
+                        extras.push(extra);
+                        
+                        total += extra.value || 0;
+                        
+                        // Adiciona à tabela
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${formatDate(extra.date)}</td>
+                            <td>${extra.service}</td>
+                            <td>${formatCurrency(extra.value)}</td>
+                            <td>
+                                <button class="btn btn-danger action-btn delete-extra" data-id="${doc.id}">Excluir</button>
+                            </td>
+                        `;
+                        extrasTableBody.appendChild(row);
+                    });
+                    
+                    totalExtrasElement.textContent = formatCurrency(total);
+                    updateReport();
+                    
+                    // Adiciona eventos aos botões de exclusão
+                    document.querySelectorAll('.delete-extra').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const extraId = e.target.getAttribute('data-id');
+                            deleteExtra(extraId);
+                        });
+                    });
+                });
+        }
+        
+        // Adiciona serviço extra
+        addExtraBtn.addEventListener('click', () => {
+            const extra = {
+                userId: currentUser.uid,
+                service: extraServiceInput.value,
+                value: parseFloat(extraValueInput.value) || 0,
+                date: extraDateInput.value,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            if (!extra.date || !extra.service || extra.value <= 0) {
+                alert('Preencha todos os campos corretamente!');
+                return;
+            }
+            
+            db.collection('extras').add(extra)
+                .then(() => {
+                    extraServiceInput.value = '';
+                    extraValueInput.value = '';
+                    loadExtras();
+                })
+                .catch((error) => {
+                    alert('Erro ao adicionar serviço extra: ' + error.message);
+                });
+        });
+        
+        // Exclui serviço extra
+        function deleteExtra(extraId) {
+            if (confirm('Tem certeza que deseja excluir este serviço extra?')) {
+                db.collection('extras').doc(extraId).delete()
+                    .then(() => {
+                        loadExtras();
+                    })
+                    .catch((error) => {
+                        alert('Erro ao excluir serviço extra: ' + error.message);
+                    });
+            }
+        }
+        
+        // Manipulação de arquivos de comprovante
+        receiptFileInput.addEventListener('change', (e) => {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                fileNameElement.textContent = selectedFile.name;
+                
+                // Mostra pré-visualização para imagens
+                if (selectedFile.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        receiptPreviewElement.src = e.target.result;
+                        receiptPreviewElement.style.display = 'block';
+                    };
+                    reader.readAsDataURL(selectedFile);
+                } else {
+                    receiptPreviewElement.style.display = 'none';
+                }
+            } else {
+                fileNameElement.textContent = 'Nenhum arquivo selecionado';
+                receiptPreviewElement.style.display = 'none';
+            }
+        });
+        
+        // Carrega comprovantes
+        function loadReceipts() {
+            db.collection('receipts').where('userId', '==', currentUser.uid).orderBy('date', 'desc').get()
+                .then((querySnapshot) => {
+                    receipts = [];
+                    receiptsTableBody.innerHTML = '';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const receipt = doc.data();
+                        receipt.id = doc.id;
+                        receipts.push(receipt);
+                        
+                        // Adiciona à tabela
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${formatDate(receipt.date)}</td>
+                            <td>${receipt.description}</td>
+                            <td>
+                                ${receipt.fileUrl ? 
+                                    `<a href="${receipt.fileUrl}" target="_blank" class="btn action-btn">Visualizar</a>` : 
+                                    'Nenhum arquivo'}
+                            </td>
+                            <td>
+                                <button class="btn btn-danger action-btn delete-receipt" data-id="${doc.id}">Excluir</button>
+                            </td>
+                        `;
+                        receiptsTableBody.appendChild(row);
+                    });
+                    
+                    // Adiciona eventos aos botões de exclusão
+                    document.querySelectorAll('.delete-receipt').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const receiptId = e.target.getAttribute('data-id');
+                            deleteReceipt(receiptId);
+                        });
+                    });
+                });
+        }
+        
+        // Adiciona comprovante
+        addReceiptBtn.addEventListener('click', () => {
+            const receipt = {
+                userId: currentUser.uid,
+                description: receiptDescriptionInput.value,
+                date: receiptDateInput.value,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            if (!receipt.date || !receipt.description || !selectedFile) {
+                alert('Preencha todos os campos e selecione um arquivo!');
+                return;
+            }
+            
+            // Upload do arquivo
+            const storageRef = storage.ref(`receipts/${currentUser.uid}/${Date.now()}_${selectedFile.name}`);
+            const uploadTask = storageRef.put(selectedFile);
+            
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    // Progresso do upload (opcional)
+                }, 
+                (error) => {
+                    alert('Erro ao fazer upload do arquivo: ' + error.message);
+                }, 
+                () => {
+                    // Upload completo, obtém URL
+                    uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                        receipt.fileUrl = downloadURL;
+                        
+                        // Salva no Firestore
+                        db.collection('receipts').add(receipt)
+                            .then(() => {
+                                receiptDescriptionInput.value = '';
+                                receiptDateInput.value = '';
+                                receiptFileInput.value = '';
+                                fileNameElement.textContent = 'Nenhum arquivo selecionado';
+                                receiptPreviewElement.style.display = 'none';
+                                selectedFile = null;
+                                loadReceipts();
+                            })
+                            .catch((error) => {
+                                alert('Erro ao salvar comprovante: ' + error.message);
+                            });
+                    });
+                }
+            );
+        });
+        
+        // Exclui comprovante
+        function deleteReceipt(receiptId) {
+            if (confirm('Tem certeza que deseja excluir este comprovante?')) {
+                // Primeiro obtém a referência do arquivo para deletar do Storage
+                db.collection('receipts').doc(receiptId).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const receipt = doc.data();
+                            if (receipt.fileUrl) {
+                                // Cria uma referência do arquivo no Storage
+                                const fileRef = storage.refFromURL(receipt.fileUrl);
+                                return fileRef.delete().then(() => {
+                                    return db.collection('receipts').doc(receiptId).delete();
+                                });
+                            } else {
+                                return db.collection('receipts').doc(receiptId).delete();
+                            }
+                        }
+                    })
+                    .then(() => {
+                        loadReceipts();
+                    })
+                    .catch((error) => {
+                        alert('Erro ao excluir comprovante: ' + error.message);
+                    });
+            }
+        }
+        
+        // Atualiza relatório
+        function updateReport() {
+            const serviceValue = parseFloat(projectValueInput.value) || 0;
+            const totalReceived = payments.reduce((sum, payment) => sum + (payment.value || 0), 0);
+            const totalExtras = extras.reduce((sum, extra) => sum + (extra.value || 0), 0);
+            const balance = totalReceived - serviceValue;
+            
+            reportServiceValueElement.textContent = formatCurrency(serviceValue);
+            reportTotalReceivedElement.textContent = formatCurrency(totalReceived);
+            reportTotalExtrasElement.textContent = formatCurrency(totalExtras);
+            
+            reportBalanceElement.textContent = formatCurrency(balance);
+            reportBalanceElement.className = balance >= 0 ? 'positive' : 'negative';
+        }
+        
+        // Gera relatório PDF
+        generateReportBtn.addEventListener('click', () => {
+            const doc = new jsPDF();
+            
+            // Cabeçalho
+            doc.setFontSize(18);
+            doc.setTextColor(40, 40, 40);
+            doc.text('Relatório Financeiro - Construtora JHS', 105, 15, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-BR')}`, 105, 25, { align: 'center' });
+            
+            // Informações da Obra
+            doc.setFontSize(14);
+            doc.setTextColor(30, 30, 30);
+            doc.text('Informações da Obra', 14, 35);
+            
+            doc.setFontSize(12);
+            doc.text(`Nome: ${projectNameInput.value || 'Não informado'}`, 14, 45);
+            doc.text(`Valor do Serviço: ${formatCurrency(parseFloat(projectValueInput.value) || 0)}`, 14, 55);
+            doc.text(`Data de Início: ${projectStartInput.value ? formatDate(projectStartInput.value) : 'Não informada'}`, 14, 65);
+            
+            // Resumo Financeiro
+            doc.setFontSize(14);
+            doc.text('Resumo Financeiro', 14, 80);
+            
+            const serviceValue = parseFloat(projectValueInput.value) || 0;
+            const totalReceived = payments.reduce((sum, payment) => sum + (payment.value || 0), 0);
+            const totalExtras = extras.reduce((sum, extra) => sum + (extra.value || 0), 0);
+            const balance = totalReceived - serviceValue;
+            
+            doc.setFontSize(12);
+            doc.text(`Valor Total do Serviço: ${formatCurrency(serviceValue)}`, 14, 90);
+            doc.text(`Total Recebido: ${formatCurrency(totalReceived)}`, 14, 100);
+            doc.text(`Total Serviços Extras: ${formatCurrency(totalExtras)}`, 14, 110);
+            doc.setTextColor(balance >= 0 ? 0, 150, 0 : 150, 0, 0);
+            doc.text(`Saldo: ${formatCurrency(balance)}`, 14, 120);
+            doc.setTextColor(30, 30, 30);
+            
+            // Vales Recebidos
+            doc.setFontSize(14);
+            doc.text('Vales Recebidos', 14, 135);
+            
+            if (payments.length > 0) {
+                const paymentData = payments.map(payment => [
+                    formatDate(payment.date),
+                    payment.description,
+                    formatCurrency(payment.value)
+                ]);
+                
+                doc.autoTable({
+                    startY: 140,
+                    head: [['Data', 'Descrição', 'Valor']],
+                    body: paymentData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [44, 62, 80] }
+                });
+            } else {
+                doc.text('Nenhum vale registrado', 14, 145);
+            }
+            
+            // Serviços Extras
+            doc.setFontSize(14);
+            doc.text('Serviços Extras', 14, doc.autoTable.previous.finalY + 15);
+            
+            if (extras.length > 0) {
+                const extraData = extras.map(extra => [
+                    formatDate(extra.date),
+                    extra.service,
+                    formatCurrency(extra.value)
+                ]);
+                
+                doc.autoTable({
+                    startY: doc.autoTable.previous.finalY + 20,
+                    head: [['Data', 'Serviço', 'Valor']],
+                    body: extraData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [44, 62, 80] }
+                });
+            } else {
+                doc.text('Nenhum serviço extra registrado', 14, doc.autoTable.previous.finalY + 20);
+            }
+            
+            // Salva o PDF
+            doc.save(`Relatorio_Construtora_JHS_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
         });
     </script>
 </body>
