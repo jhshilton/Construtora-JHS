@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Construtora JHS - Login</title>
     
-    <!-- Firebase SDK (OBRIGATÓRIO) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     
@@ -27,25 +27,41 @@
             width: 300px;
             text-align: center;
         }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
         input {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 5px;
+            box-sizing: border-box;
         }
         button {
             width: 100%;
             padding: 10px;
-            background: #4CAF50;
+            background: #3498db;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        #register-btn {
+            background: #2ecc71;
+        }
+        #register-btn:hover {
+            background: #27ae60;
         }
         .error {
-            color: red;
+            color: #e74c3c;
             font-size: 14px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -60,21 +76,24 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO FIREBASE (SUA CONFIG AQUI!)
+        // Configuração do Firebase (SUBSTITUA COM SEUS DADOS)
         const firebaseConfig = {
-            apiKey: "AIzaSyC5cnKYsZ5wCI8Aeho0KEmeFTSxtDd0AkY",
-            authDomain: "construtora-jhs-2693d.firebaseapp.com",
-            projectId: "construtora-jhs-2693d",
-            storageBucket: "construtora-jhs-2693d.appspot.com",
-            messagingSenderId: "358435009217",
-            appId: "1:358435009217:web:2e11ec33ee15a8b7ac9a40"
+            apiKey: "SUA_API_KEY_AQUI",
+            authDomain: "SEU_AUTH_DOMAIN_AQUI",
+            projectId: "SEU_PROJECT_ID_AQUI",
+            storageBucket: "SEU_STORAGE_BUCKET_AQUI",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID_AQUI",
+            appId: "SEU_APP_ID_AQUI"
         };
+
+        // Inicialização do Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         
-        // INICIALIZA O FIREBASE
-        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        
-        // LOGIN
+
+        // Login
         document.getElementById("login-btn").addEventListener("click", () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
@@ -88,7 +107,7 @@
                 });
         });
         
-        // CADASTRO
+        // Cadastro
         document.getElementById("register-btn").addEventListener("click", () => {
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
