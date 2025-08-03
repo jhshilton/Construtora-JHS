@@ -274,9 +274,10 @@
         <div class="card">
             <h2>Relatório Financeiro</h2>
             <div id="report-summary">
-                <p>Valor Total: <span id="total-value">R$ 0,00</span></p>
-                <p>Total Recebido: <span id="total-received">R$ 0,00</span></p>
+                <p>Valor da Obra: <span id="project-value-display">R$ 0,00</span></p>
                 <p>Total Serviços Extras: <span id="total-extras">R$ 0,00</span></p>
+                <p>Valor Total (Obra + Extras): <span id="total-value">R$ 0,00</span></p>
+                <p>Total Vales Recebidos: <span id="total-received">R$ 0,00</span></p>
                 <p>Saldo: <span id="balance">R$ 0,00</span></p>
             </div>
             <button id="generate-pdf-btn" class="btn-success">Gerar PDF</button>
@@ -284,7 +285,7 @@
     </div>
 
     <script>
-        // Configuração do Firebase (SUBSTITUA COM SEUS DADOS)
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyC5cnKYsZ5wCI8Aeho0KEmeFTSxtDd0AkY",
             authDomain: "construtora-jhs-2693d.firebaseapp.com",
@@ -365,11 +366,9 @@
                 .then(querySnapshot => {
                     const tbody = document.querySelector("#payments-table tbody");
                     tbody.innerHTML = "";
-                    let total = 0;
-
+                    
                     querySnapshot.forEach(doc => {
                         const payment = doc.data();
-                        total += parseFloat(payment.value) || 0;
                         
                         const row = document.createElement("tr");
                         row.innerHTML = `
@@ -383,7 +382,6 @@
                         tbody.appendChild(row);
                     });
 
-                    document.getElementById("total-received").textContent = formatCurrency(total);
                     updateReport();
                     setupDeleteButtons();
                 })
@@ -422,11 +420,9 @@
                 .then(querySnapshot => {
                     const tbody = document.querySelector("#extras-table tbody");
                     tbody.innerHTML = "";
-                    let total = 0;
-
+                    
                     querySnapshot.forEach(doc => {
                         const extra = doc.data();
-                        total += parseFloat(extra.value) || 0;
                         
                         const row = document.createElement("tr");
                         row.innerHTML = `
@@ -440,7 +436,6 @@
                         tbody.appendChild(row);
                     });
 
-                    document.getElementById("total-extras").textContent = formatCurrency(total);
                     updateReport();
                     setupDeleteButtons();
                 })
@@ -564,12 +559,41 @@
         // 5. Relatório e Funções Auxiliares
         function updateReport() {
             const projectValue = parseFloat(document.getElementById("project-value").value) || 0;
-            const totalReceived = parseFloat(document.getElementById("total-received").textContent.replace("R$ ", "").replace(".", "").replace(",", ".")) || 0;
-            const totalExtras = parseFloat(document.getElementById("total-extras").textContent.replace("R$ ", "").replace(".", "").replace(",", ".")) || 0;
             
-            document.getElementById("total-value").textContent = formatCurrency(projectValue);
-            const balance = totalReceived - projectValue;
-            document.getElementById("balance").textContent = formatCurrency(balance);
+            // Calcular total de vales recebidos
+            let totalReceived = 0;
+            document.querySelectorAll("#payments-table tbody tr").forEach(row => {
+                const valueText = row.cells[2].textContent.replace("R$", "").replace(".", "").replace(",", ".").trim();
+                totalReceived += parseFloat(valueText) || 0;
+            });
+            
+            // Calcular total de serviços extras
+            let totalExtras = 0;
+            document.querySelectorAll("#extras-table tbody tr").forEach(row => {
+                const valueText = row.cells[2].textContent.replace("R$", "").replace(".", "").replace(",", ".").trim();
+                totalExtras += parseFloat(valueText) || 0;
+            });
+            
+            // Calcular valor total (obra + extras)
+            const totalValue = projectValue + totalExtras;
+            
+            // Atualizar os elementos na tela
+            document.getElementById("project-value-display").textContent = formatCurrency(projectValue);
+            document.getElementById("total-extras").textContent = formatCurrency(totalExtras);
+            document.getElementById("total-value").textContent = formatCurrency(totalValue);
+            document.getElementById("total-received").textContent = formatCurrency(totalReceived);
+            
+            // Calcular saldo
+            const balance = totalValue - totalReceived;
+            const balanceElement = document.getElementById("balance");
+            balanceElement.textContent = formatCurrency(balance);
+            
+            // Aplicar cor conforme o saldo
+            if (totalReceived <= totalValue) {
+                balanceElement.style.color = '#2ecc71'; // Verde
+            } else {
+                balanceElement.style.color = '#e74c3c'; // Vermelho
+            }
         }
 
         document.getElementById("generate-pdf-btn").addEventListener("click", generatePDFReport);
@@ -591,7 +615,7 @@
             
             doc.setFontSize(12);
             doc.text(`Nome: ${document.getElementById("project-name").value || "Não informado"}`, 14, 50);
-            doc.text(`Valor: ${document.getElementById("total-value").textContent}`, 14, 60);
+            doc.text(`Valor: ${document.getElementById("project-value-display").textContent}`, 14, 60);
             
             // Vales Recebidos
             doc.setFontSize(14);
@@ -646,9 +670,17 @@
             doc.text("Resumo Financeiro", 14, doc.autoTable.previous.finalY + 30);
             
             doc.setFontSize(12);
-            doc.text(`Valor Total: ${document.getElementById("total-value").textContent}`, 14, doc.autoTable.previous.finalY + 40);
-            doc.text(`Total Recebido: ${document.getElementById("total-received").textContent}`, 14, doc.autoTable.previous.finalY + 50);
-            doc.text(`Saldo: ${document.getElementById("balance").textContent}`, 14, doc.autoTable.previous.finalY + 60);
+            doc.text(`Valor da Obra: ${document.getElementById("project-value-display").textContent}`, 14, doc.autoTable.previous.finalY + 40);
+            doc.text(`Total Serviços Extras: ${document.getElementById("total-extras").textContent}`, 14, doc.autoTable.previous.finalY + 50);
+            doc.text(`Valor Total: ${document.getElementById("total-value").textContent}`, 14, doc.autoTable.previous.finalY + 60);
+            doc.text(`Total Vales Recebidos: ${document.getElementById("total-received").textContent}`, 14, doc.autoTable.previous.finalY + 70);
+            
+            // Saldo com cor
+            const balance = document.getElementById("balance").textContent;
+            const balanceColor = document.getElementById("balance").style.color;
+            
+            doc.setTextColor(balanceColor === 'rgb(46, 204, 113)' ? 46 : 231, balanceColor === 'rgb(46, 204, 113)' ? 204 : 76, balanceColor === 'rgb(46, 204, 113)' ? 113 : 60);
+            doc.text(`Saldo: ${balance}`, 14, doc.autoTable.previous.finalY + 80);
             
             doc.save(`Relatorio_Construtora_JHS_${new Date().toLocaleDateString("pt-BR")}.pdf`);
         }
@@ -708,8 +740,12 @@
 
         function formatDate(dateString) {
             if (!dateString) return "Não informado";
-            const date = new Date(dateString);
-            return date.toLocaleDateString("pt-BR");
+            try {
+                const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+                return date.toLocaleDateString("pt-BR");
+            } catch (e) {
+                return "Data inválida";
+            }
         }
 
         function formatCurrency(value) {
