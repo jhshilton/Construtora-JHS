@@ -60,7 +60,7 @@
                     document.getElementById("project-value").value = formatCurrencyInputValue(data.value || 0);
                     document.getElementById("project-start").value = data.startDate || "";
                     document.getElementById("project-description").value = data.description || "";
-                    updateReport();
+                    await updateReport();
                 }
             } catch (error) {
                 console.error("Erro ao carregar obra:", error);
@@ -81,14 +81,14 @@
 
                 await setDoc(doc(db, "projects", currentUser.uid), projectData);
                 showToast("Informações da obra salvas com sucesso!");
-                updateReport();
+                await updateReport();
             } catch (error) {
                 console.error("Erro ao salvar obra:", error);
                 showToast("Erro ao salvar informações da obra", true);
             }
         });
 
-        // 2. Vales Recebidos - Função corrigida
+        // 2. Vales Recebidos
         async function loadPayments() {
             try {
                 const q = query(
@@ -115,7 +115,7 @@
                     tbody.appendChild(row);
                 });
 
-                updateReport();
+                await updateReport();
                 setupDeleteButtons();
             } catch (error) {
                 console.error("Erro ao carregar vales:", error);
@@ -144,20 +144,19 @@
 
                 await addDoc(collection(db, "payments"), paymentData);
                 
-                // Limpar campos
-                document.getElementById("payment-value").value = "";
+                document.getElementById("payment-value").value = "0,00";
                 document.getElementById("payment-date").value = "";
                 document.getElementById("payment-description").value = "";
                 
                 showToast("Vale recebido cadastrado com sucesso!");
-                loadPayments();
+                await loadPayments();
             } catch (error) {
                 console.error("Erro ao adicionar vale:", error);
                 showToast("Erro ao cadastrar vale recebido", true);
             }
         });
 
-        // 3. Serviços Extras - Função corrigida
+        // 3. Serviços Extras
         async function loadExtras() {
             try {
                 const q = query(
@@ -184,7 +183,7 @@
                     tbody.appendChild(row);
                 });
 
-                updateReport();
+                await updateReport();
                 setupDeleteButtons();
             } catch (error) {
                 console.error("Erro ao carregar serviços extras:", error);
@@ -213,13 +212,12 @@
 
                 await addDoc(collection(db, "extras"), extraData);
                 
-                // Limpar campos
                 document.getElementById("extra-service").value = "";
-                document.getElementById("extra-value").value = "";
+                document.getElementById("extra-value").value = "0,00";
                 document.getElementById("extra-date").value = "";
                 
                 showToast("Serviço extra cadastrado com sucesso!");
-                loadExtras();
+                await loadExtras();
             } catch (error) {
                 console.error("Erro ao adicionar serviço extra:", error);
                 showToast("Erro ao cadastrar serviço extra", true);
@@ -305,7 +303,6 @@
 
                 await addDoc(collection(db, "receipts"), receiptData);
                 
-                // Limpar campos
                 document.getElementById("receipt-description").value = "";
                 document.getElementById("receipt-file").value = "";
                 document.getElementById("file-name").textContent = "Nenhum arquivo selecionado";
@@ -313,58 +310,73 @@
                 selectedFile = null;
                 
                 showToast("Comprovante cadastrado com sucesso!");
-                loadReceipts();
+                await loadReceipts();
             } catch (error) {
                 console.error("Erro ao salvar comprovante:", error);
                 showToast("Erro ao cadastrar comprovante", true);
             }
         });
 
-        // 5. Relatório Financeiro - Função corrigida
-        function updateReport() {
-            const projectValue = parseFloat(document.getElementById("project-value").value.replace(/\./g, "").replace(",", ".")) || 0;
-            
-            // Calcular total de vales recebidos
-            let totalReceived = 0;
-            document.querySelectorAll("#payments-table tbody tr").forEach(row => {
-                const valueText = row.cells[2].textContent;
-                const value = parseFloat(valueText.replace(/[^\d,-]/g, "").replace(",", ".")) || 0;
-                totalReceived += value;
-            });
-            
-            // Calcular total de serviços extras
-            let totalExtras = 0;
-            document.querySelectorAll("#extras-table tbody tr").forEach(row => {
-                const valueText = row.cells[2].textContent;
-                const value = parseFloat(valueText.replace(/[^\d,-]/g, "").replace(",", ".")) || 0;
-                totalExtras += value;
-            });
-            
-            // Calcular valor total (obra + extras)
-            const totalValue = projectValue + totalExtras;
-            
-            // Atualizar os elementos na tela
-            document.getElementById("project-value-display").textContent = formatCurrency(projectValue);
-            document.getElementById("total-extras").textContent = formatCurrency(totalExtras);
-            document.getElementById("total-value").textContent = formatCurrency(totalValue);
-            document.getElementById("total-received").textContent = formatCurrency(totalReceived);
-            
-            // Calcular saldo
-            const balance = totalValue - totalReceived;
-            const balanceElement = document.getElementById("balance");
-            balanceElement.textContent = formatCurrency(balance);
-            
-            // Aplicar cor conforme o saldo
-            balanceElement.style.color = balance >= 0 ? '#2ecc71' : '#e74c3c';
+        // 5. Relatório Financeiro
+        async function updateReport() {
+            try {
+                // Obter valor da obra
+                const projectDocRef = doc(db, "projects", currentUser.uid);
+                const projectDocSnap = await getDoc(projectDocRef);
+                const projectValue = projectDocSnap.exists() 
+                    ? parseFloat(projectDocSnap.data().value) || 0 
+                    : 0;
+
+                // Calcular total de vales recebidos
+                let totalReceived = 0;
+                const paymentsQuery = query(
+                    collection(db, "payments"),
+                    where("userId", "==", currentUser.uid)
+                );
+                const paymentsSnapshot = await getDocs(paymentsQuery);
+                paymentsSnapshot.forEach((doc) => {
+                    const payment = doc.data();
+                    totalReceived += parseFloat(payment.value) || 0;
+                });
+
+                // Calcular total de serviços extras
+                let totalExtras = 0;
+                const extrasQuery = query(
+                    collection(db, "extras"),
+                    where("userId", "==", currentUser.uid)
+                );
+                const extrasSnapshot = await getDocs(extrasQuery);
+                extrasSnapshot.forEach((doc) => {
+                    const extra = doc.data();
+                    totalExtras += parseFloat(extra.value) || 0;
+                });
+
+                // Calcular valor total (obra + extras)
+                const totalValue = projectValue + totalExtras;
+
+                // Calcular saldo
+                const balance = totalValue - totalReceived;
+
+                // Atualizar os elementos na tela
+                document.getElementById("project-value-display").textContent = formatCurrency(projectValue);
+                document.getElementById("total-extras").textContent = formatCurrency(totalExtras);
+                document.getElementById("total-value").textContent = formatCurrency(totalValue);
+                document.getElementById("total-received").textContent = formatCurrency(totalReceived);
+                
+                const balanceElement = document.getElementById("balance");
+                balanceElement.textContent = formatCurrency(balance);
+                balanceElement.style.color = balance >= 0 ? '#2ecc71' : '#e74c3c';
+            } catch (error) {
+                console.error("Erro ao atualizar relatório financeiro:", error);
+                showToast("Erro ao atualizar relatório financeiro", true);
+            }
         }
 
-        // Gerar PDF do relatório
         document.getElementById("generate-pdf-btn").addEventListener("click", generatePDFReport);
 
         function generatePDFReport() {
             const doc = new jsPDF();
             
-            // Cabeçalho
             doc.setFontSize(18);
             doc.setTextColor(40, 40, 40);
             doc.text("Relatório Financeiro - Construtora JHS", 105, 15, { align: "center" });
@@ -372,7 +384,6 @@
             doc.setFontSize(12);
             doc.text(`Emitido em: ${new Date().toLocaleDateString("pt-BR")}`, 105, 25, { align: "center" });
             
-            // Informações da Obra
             doc.setFontSize(14);
             doc.text("Informações da Obra", 14, 40);
             
@@ -380,7 +391,6 @@
             doc.text(`Nome: ${document.getElementById("project-name").value || "Não informado"}`, 14, 50);
             doc.text(`Valor: ${document.getElementById("project-value-display").textContent}`, 14, 60);
             
-            // Vales Recebidos
             doc.setFontSize(14);
             doc.text("Vales Recebidos", 14, 80);
             
@@ -404,7 +414,6 @@
                 doc.text("Nenhum vale registrado", 14, 85);
             }
             
-            // Serviços Extras
             doc.setFontSize(14);
             doc.text("Serviços Extras", 14, doc.autoTable.previous.finalY + 15);
             
@@ -428,7 +437,6 @@
                 doc.text("Nenhum serviço extra registrado", 14, doc.autoTable.previous.finalY + 20);
             }
             
-            // Resumo
             doc.setFontSize(14);
             doc.text("Resumo Financeiro", 14, doc.autoTable.previous.finalY + 30);
             
@@ -438,7 +446,6 @@
             doc.text(`Valor Total: ${document.getElementById("total-value").textContent}`, 14, doc.autoTable.previous.finalY + 60);
             doc.text(`Total Vales Recebidos: ${document.getElementById("total-received").textContent}`, 14, doc.autoTable.previous.finalY + 70);
             
-            // Saldo com cor
             const balance = document.getElementById("balance").textContent;
             const balanceColor = document.getElementById("balance").style.color;
             
@@ -450,7 +457,6 @@
 
         // Configurar botões de exclusão
         function setupDeleteButtons() {
-            // Vales
             document.querySelectorAll(".delete-payment").forEach(btn => {
                 btn.addEventListener("click", async (e) => {
                     const id = e.target.getAttribute("data-id");
@@ -458,7 +464,7 @@
                         try {
                             await deleteDoc(doc(db, "payments", id));
                             showToast("Vale excluído com sucesso!");
-                            loadPayments();
+                            await loadPayments();
                         } catch (error) {
                             console.error("Erro ao excluir vale:", error);
                             showToast("Erro ao excluir vale", true);
@@ -467,7 +473,6 @@
                 });
             });
             
-            // Serviços Extras
             document.querySelectorAll(".delete-extra").forEach(btn => {
                 btn.addEventListener("click", async (e) => {
                     const id = e.target.getAttribute("data-id");
@@ -475,7 +480,7 @@
                         try {
                             await deleteDoc(doc(db, "extras", id));
                             showToast("Serviço extra excluído com sucesso!");
-                            loadExtras();
+                            await loadExtras();
                         } catch (error) {
                             console.error("Erro ao excluir serviço extra:", error);
                             showToast("Erro ao excluir serviço extra", true);
@@ -484,7 +489,6 @@
                 });
             });
             
-            // Comprovantes
             document.querySelectorAll(".delete-receipt").forEach(btn => {
                 btn.addEventListener("click", async (e) => {
                     const id = e.target.getAttribute("data-id");
@@ -501,7 +505,7 @@
                                 }
                                 await deleteDoc(docRef);
                                 showToast("Comprovante excluído com sucesso!");
-                                loadReceipts();
+                                await loadReceipts();
                             }
                         } catch (error) {
                             console.error("Erro ao excluir comprovante:", error);
@@ -513,12 +517,12 @@
         }
 
         // Carregar todos os dados
-        function loadAllData() {
-            loadProjectData();
-            loadPayments();
-            loadExtras();
-            loadReceipts();
-            updateReport();
+        async function loadAllData() {
+            await loadProjectData();
+            await loadPayments();
+            await loadExtras();
+            await loadReceipts();
+            await updateReport();
         }
 
         // Formatadores
@@ -533,7 +537,6 @@
         }
 
         function formatCurrency(value) {
-            // Converte para número se for string
             const numValue = typeof value === 'string' ? 
                 parseFloat(value.replace(/\./g, "").replace(",", ".")) : 
                 Number(value);
@@ -574,16 +577,12 @@
         function handleCurrencyInput(event) {
             let value = event.target.value.replace(/\D/g, "");
             
-            // Se o campo estiver vazio, define como 0,00
             if (value === "") {
                 event.target.value = "0,00";
                 return;
             }
             
-            // Adiciona zeros à esquerda para garantir 2 casas decimais
             value = value.padStart(3, "0");
-            
-            // Formata como moeda brasileira
             value = value.replace(/(\d)(\d{2})$/, "$1,$2");
             value = value.replace(/(?=(\d{3})+(\D))\B/g, ".");
             
@@ -742,7 +741,6 @@
             display: none;
         }
 
-        /* Estilos para as mensagens toast */
         .toast {
             position: fixed;
             bottom: 20px;
