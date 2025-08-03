@@ -9,7 +9,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, addDoc, getDoc, getDocs, query, where, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, getDoc, getDocs, query, where, orderBy, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-storage.js";
 
         // Configuração do Firebase
@@ -32,6 +32,7 @@
         // Variáveis globais
         let currentUser = null;
         let selectedFile = null;
+        let activeProjectId = null;
 
         // Verificação de autenticação
         onAuthStateChanged(auth, (user) => {
@@ -39,8 +40,8 @@
                 window.location.href = "index.html";
             } else {
                 currentUser = user;
-                console.log("Usuário autenticado:", currentUser.uid); // Log para depuração
-                loadAllData();
+                console.log("Usuário autenticado:", currentUser.uid);
+                loadProjects();
             }
         });
 
@@ -49,22 +50,118 @@
             signOut(auth);
         });
 
-        // 1. Informações da Obra
-        async function loadProjectData() {
+        // Carregar lista de obras
+        async function loadProjects() {
             try {
-                const docRef = doc(db, "projects", currentUser.uid);
+                const q = query(
+                    collection(db, "projects"),
+                    where("userId", "==", currentUser.uid),
+                    orderBy("lastUpdate", "desc")
+                );
+                const querySnapshot = await getDocs(q);
+                const projectSelect = document.getElementById("project-select");
+                projectSelect.innerHTML = '<option value="">Selecione uma obra</option>';
+
+                querySnapshot.forEach((doc) => {
+                    const project = doc.data();
+                    const option = document.createElement("option");
+                    option.value = doc.id;
+                    option.textContent = `${project.name} (${project.status === 'active' ? 'Ativa' : 'Concluída'})`;
+                    projectSelect.appendChild(option);
+                    if (project.status === 'active' && !activeProjectId) {
+                        activeProjectId = doc.id;
+                        projectSelect.value = doc.id;
+                    }
+                });
+
+                if (activeProjectId) {
+                    await loadProjectData(activeProjectId);
+                    await loadPayments();
+                    await loadExtras();
+                    await loadReceipts();
+                    await updateReport();
+                }
+                console.log("Obras carregadas, obra ativa:", activeProjectId);
+            } catch (error) {
+                console.error("Erro ao carregar obras:", error);
+                showToast("Erro ao carregar obras", true);
+            }
+        }
+
+        // Selecionar obra ativa
+        document.getElementById("project-select").addEventListener("change", async (e) => {
+            activeProjectId = e.target.value;
+            console.log("Obra ativa selecionada:", activeProjectId);
+            if (activeProjectId) {
+                await loadProjectData(activeProjectId);
+                await loadPayments();
+                await loadExtras();
+                await loadReceipts();
+                await updateReport();
+            } else {
+                clearProjectForm();
+            }
+        });
+
+        // Criar nova obra
+        document.getElementById("new-project-btn").addEventListener("click", async () => {
+            try {
+                const projectData = {
+                    name: "Nova Obra",
+                    value: 0,
+                    startDate: "",
+                    description: "",
+                    userId: currentUser.uid,
+                    status: "active",
+                    lastUpdate: new Date()
+                };
+                const docRef = await addDoc(collection(db, "projects"), projectData);
+                activeProjectId = docRef.id;
+                console.log("Nova obra criada:", activeProjectId);
+                await loadProjects();
+                showToast("Nova obra criada com sucesso!");
+            } catch (error) {
+                console.error("Erro ao criar nova obra:", error);
+                showToast("Erro ao criar nova obra", true);
+            }
+        });
+
+        // Concluir obra
+        document.getElementById("complete-project-btn").addEventListener("click", async () => {
+            if (!activeProjectId) {
+                showToast("Nenhuma obra selecionada!", true);
+                return;
+            }
+            if (confirm("Tem certeza que deseja concluir esta obra?")) {
+                try {
+                    await updateDoc(doc(db, "projects", activeProjectId), { status: "completed", lastUpdate: new Date() });
+                    activeProjectId = null;
+                    await loadProjects();
+                    clearProjectForm();
+                    showToast("Obra concluída com sucesso!");
+                } catch (error) {
+                    console.error("Erro ao concluir obra:", error);
+                    showToast("Erro ao concluir obra", true);
+                }
+            }
+        });
+
+        // Carregar dados da obra
+        async function loadProjectData(projectId) {
+            try {
+                const docRef = doc(db, "projects", projectId);
                 const docSnap = await getDoc(docRef);
                 
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    console.log("Dados da obra carregados:", data); // Log para depuração
+                    console.log("Dados da obra carregados:", data);
                     document.getElementById("project-name").value = data.name || "";
                     document.getElementById("project-value").value = formatCurrencyInputValue(data.value || 0);
                     document.getElementById("project-start").value = data.startDate || "";
                     document.getElementById("project-description").value = data.description || "";
-                    await updateReport();
                 } else {
-                    console.log("Nenhum dado de obra encontrado para o usuário:", currentUser.uid);
+                    console.log("Nenhum dado de obra encontrado para o ID:", projectId);
+                    clearProjectForm();
                 }
             } catch (error) {
                 console.error("Erro ao carregar obra:", error);
@@ -72,7 +169,12 @@
             }
         }
 
+        // Salvar dados da obra
         document.getElementById("save-project-btn").addEventListener("click", async () => {
+            if (!activeProjectId) {
+                showToast("Selecione ou crie uma obra antes de salvar!", true);
+                return;
+            }
             try {
                 const projectValueRaw = document.getElementById("project-value").value;
                 const projectValue = parseFloat(projectValueRaw.replace(/\./g, "").replace(",", ".")) || 0;
@@ -87,12 +189,14 @@
                     startDate: document.getElementById("project-start").value,
                     description: document.getElementById("project-description").value,
                     userId: currentUser.uid,
+                    status: "active",
                     lastUpdate: new Date()
                 };
 
-                console.log("Salvando dados da obra:", projectData); // Log para depuração
-                await setDoc(doc(db, "projects", currentUser.uid), projectData);
+                console.log("Salvando dados da obra:", projectData);
+                await setDoc(doc(db, "projects", activeProjectId), projectData);
                 showToast("Informações da obra salvas com sucesso!");
+                await loadProjects();
                 await updateReport();
             } catch (error) {
                 console.error("Erro ao salvar obra:", error);
@@ -100,12 +204,23 @@
             }
         });
 
-        // 2. Vales Recebidos
+        // Limpar formulário de obra
+        function clearProjectForm() {
+            document.getElementById("project-name").value = "";
+            document.getElementById("project-value").value = "0,00";
+            document.getElementById("project-start").value = "";
+            document.getElementById("project-description").value = "";
+            document.getElementById("project-select").value = "";
+        }
+
+        // Carregar vales recebidos
         async function loadPayments() {
+            if (!activeProjectId) return;
             try {
                 const q = query(
                     collection(db, "payments"),
                     where("userId", "==", currentUser.uid),
+                    where("projectId", "==", activeProjectId),
                     orderBy("date", "desc")
                 );
                 
@@ -115,7 +230,7 @@
                 
                 querySnapshot.forEach((doc) => {
                     const payment = doc.data();
-                    console.log("Vale carregado:", payment); // Log para depuração
+                    console.log("Vale carregado:", payment);
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${formatDate(payment.date)}</td>
@@ -128,7 +243,7 @@
                     tbody.appendChild(row);
                 });
 
-                console.log("Total de vales carregados:", querySnapshot.size); // Log para depuração
+                console.log("Total de vales carregados:", querySnapshot.size);
                 await updateReport();
                 setupDeleteButtons();
             } catch (error) {
@@ -137,7 +252,12 @@
             }
         }
 
+        // Adicionar vale
         document.getElementById("add-payment-btn").addEventListener("click", async () => {
+            if (!activeProjectId) {
+                showToast("Selecione uma obra antes de adicionar um vale!", true);
+                return;
+            }
             try {
                 const paymentValueRaw = document.getElementById("payment-value").value;
                 const paymentValue = parseFloat(paymentValueRaw.replace(/\./g, "").replace(",", ".")) || 0;
@@ -154,10 +274,11 @@
                     date: paymentDate,
                     description: paymentDescription,
                     userId: currentUser.uid,
+                    projectId: activeProjectId,
                     createdAt: new Date()
                 };
 
-                console.log("Salvando vale:", paymentData); // Log para depuração
+                console.log("Salvando vale:", paymentData);
                 await addDoc(collection(db, "payments"), paymentData);
                 
                 document.getElementById("payment-value").value = "0,00";
@@ -172,12 +293,14 @@
             }
         });
 
-        // 3. Serviços Extras
+        // Carregar serviços extras
         async function loadExtras() {
+            if (!activeProjectId) return;
             try {
                 const q = query(
                     collection(db, "extras"),
                     where("userId", "==", currentUser.uid),
+                    where("projectId", "==", activeProjectId),
                     orderBy("date", "desc")
                 );
                 
@@ -187,7 +310,7 @@
                 
                 querySnapshot.forEach((doc) => {
                     const extra = doc.data();
-                    console.log("Serviço extra carregado:", extra); // Log para depuração
+                    console.log("Serviço extra carregado:", extra);
                     const row = document.createElement("tr");
                     row.innerHTML = `
                         <td>${formatDate(extra.date)}</td>
@@ -200,7 +323,7 @@
                     tbody.appendChild(row);
                 });
 
-                console.log("Total de serviços extras carregados:", querySnapshot.size); // Log para depuração
+                console.log("Total de serviços extras carregados:", querySnapshot.size);
                 await updateReport();
                 setupDeleteButtons();
             } catch (error) {
@@ -209,7 +332,12 @@
             }
         }
 
+        // Adicionar serviço extra
         document.getElementById("add-extra-btn").addEventListener("click", async () => {
+            if (!activeProjectId) {
+                showToast("Selecione uma obra antes de adicionar um serviço extra!", true);
+                return;
+            }
             try {
                 const extraService = document.getElementById("extra-service").value;
                 const extraValueRaw = document.getElementById("extra-value").value;
@@ -226,10 +354,11 @@
                     value: extraValue,
                     date: extraDate,
                     userId: currentUser.uid,
+                    projectId: activeProjectId,
                     createdAt: new Date()
                 };
 
-                console.log("Salvando serviço extra:", extraData); // Log para depuração
+                console.log("Salvando serviço extra:", extraData);
                 await addDoc(collection(db, "extras"), extraData);
                 
                 document.getElementById("extra-service").value = "";
@@ -244,7 +373,7 @@
             }
         });
 
-        // 4. Comprovantes PIX
+        // Carregar comprovantes PIX
         document.getElementById("receipt-file").addEventListener("change", (e) => {
             selectedFile = e.target.files[0];
             if (selectedFile) {
@@ -265,10 +394,12 @@
         });
 
         async function loadReceipts() {
+            if (!activeProjectId) return;
             try {
                 const q = query(
                     collection(db, "receipts"),
                     where("userId", "==", currentUser.uid),
+                    where("projectId", "==", activeProjectId),
                     orderBy("createdAt", "desc")
                 );
                 
@@ -294,7 +425,7 @@
                     tbody.appendChild(row);
                 });
 
-                console.log("Total de comprovantes carregados:", querySnapshot.size); // Log para depuração
+                console.log("Total de comprovantes carregados:", querySnapshot.size);
                 setupDeleteButtons();
             } catch (error) {
                 console.error("Erro ao carregar comprovantes:", error);
@@ -303,6 +434,10 @@
         }
 
         document.getElementById("add-receipt-btn").addEventListener("click", async () => {
+            if (!activeProjectId) {
+                showToast("Selecione uma obra antes de adicionar um comprovante!", true);
+                return;
+            }
             try {
                 const description = document.getElementById("receipt-description").value;
                 
@@ -311,7 +446,7 @@
                     return;
                 }
 
-                const storageRef = ref(storage, `receipts/${currentUser.uid}/${Date.now()}_${selectedFile.name}`);
+                const storageRef = ref(storage, `receipts/${currentUser.uid}/${activeProjectId}/${Date.now()}_${selectedFile.name}`);
                 const uploadTask = await uploadBytes(storageRef, selectedFile);
                 const downloadURL = await getDownloadURL(uploadTask.ref);
 
@@ -319,10 +454,11 @@
                     description: description,
                     fileUrl: downloadURL,
                     userId: currentUser.uid,
+                    projectId: activeProjectId,
                     createdAt: new Date()
                 };
 
-                console.log("Salvando comprovante:", receiptData); // Log para depuração
+                console.log("Salvando comprovante:", receiptData);
                 await addDoc(collection(db, "receipts"), receiptData);
                 
                 document.getElementById("receipt-description").value = "";
@@ -339,47 +475,57 @@
             }
         });
 
-        // 5. Relatório Financeiro
+        // Atualizar relatório financeiro
         async function updateReport() {
+            if (!activeProjectId) {
+                document.getElementById("project-value-display").textContent = "R$ 0,00";
+                document.getElementById("total-extras").textContent = "R$ 0,00";
+                document.getElementById("total-value").textContent = "R$ 0,00";
+                document.getElementById("total-received").textContent = "R$ 0,00";
+                document.getElementById("balance").textContent = "R$ 0,00";
+                return;
+            }
             try {
                 // Obter valor da obra
-                const projectDocRef = doc(db, "projects", currentUser.uid);
+                const projectDocRef = doc(db, "projects", activeProjectId);
                 const projectDocSnap = await getDoc(projectDocRef);
                 const projectValue = projectDocSnap.exists() 
                     ? parseFloat(projectDocSnap.data().value) || 0 
                     : 0;
 
-                console.log("Valor da obra:", projectValue); // Log para depuração
+                console.log("Valor da obra:", projectValue);
 
                 // Calcular total de vales recebidos
                 let totalReceived = 0;
                 const paymentsQuery = query(
                     collection(db, "payments"),
-                    where("userId", "==", currentUser.uid)
+                    where("userId", "==", currentUser.uid),
+                    where("projectId", "==", activeProjectId)
                 );
                 const paymentsSnapshot = await getDocs(paymentsQuery);
                 paymentsSnapshot.forEach((doc) => {
                     const payment = doc.data();
-                    console.log("Vale carregado:", payment); // Log para depuração
+                    console.log("Vale carregado:", payment);
                     totalReceived += parseFloat(payment.value) || 0;
                 });
 
-                console.log("Total de vales recebidos:", totalReceived); // Log para depuração
+                console.log("Total de vales recebidos:", totalReceived);
 
                 // Calcular total de serviços extras
                 let totalExtras = 0;
                 const extrasQuery = query(
                     collection(db, "extras"),
-                    where("userId", "==", currentUser.uid)
+                    where("userId", "==", currentUser.uid),
+                    where("projectId", "==", activeProjectId)
                 );
                 const extrasSnapshot = await getDocs(extrasQuery);
                 extrasSnapshot.forEach((doc) => {
                     const extra = doc.data();
-                    console.log("Serviço extra carregado:", extra); // Log para depuração
+                    console.log("Serviço extra carregado:", extra);
                     totalExtras += parseFloat(extra.value) || 0;
                 });
 
-                console.log("Total de serviços extras:", totalExtras); // Log para depuração
+                console.log("Total de serviços extras:", totalExtras);
 
                 // Calcular valor total (obra + extras)
                 const totalValue = projectValue + totalExtras;
@@ -397,16 +543,19 @@
                 balanceElement.textContent = formatCurrency(balance);
                 balanceElement.style.color = balance >= 0 ? '#2ecc71' : '#e74c3c';
 
-                console.log("Relatório atualizado:", { projectValue, totalExtras, totalValue, totalReceived, balance }); // Log para depuração
+                console.log("Relatório atualizado:", { projectValue, totalExtras, totalValue, totalReceived, balance });
             } catch (error) {
                 console.error("Erro ao atualizar relatório financeiro:", error);
                 showToast("Erro ao atualizar relatório financeiro", true);
             }
         }
 
-        document.getElementById("generate-pdf-btn").addEventListener("click", generatePDFReport);
-
-        function generatePDFReport() {
+        // Gerar relatório PDF
+        document.getElementById("generate-pdf-btn").addEventListener("click", async () => {
+            if (!activeProjectId) {
+                showToast("Selecione uma obra para gerar o relatório!", true);
+                return;
+            }
             try {
                 const doc = new jsPDF();
                 
@@ -485,13 +634,13 @@
                 doc.setTextColor(balanceColor === 'rgb(46, 204, 113)' ? 46 : 231, balanceColor === 'rgb(46, 204, 113)' ? 204 : 76, balanceColor === 'rgb(46, 204, 113)' ? 113 : 60);
                 doc.text(`Saldo: ${balance}`, 14, doc.autoTable.previous.finalY + 80);
                 
-                doc.save(`Relatorio_Construtora_JHS_${new Date().toLocaleDateString("pt-BR")}.pdf`);
+                doc.save(`Relatorio_Construtora_JHS_${document.getElementById("project-name").value || "Obra"}_${new Date().toLocaleDateString("pt-BR")}.pdf`);
                 showToast("Relatório PDF gerado com sucesso!");
             } catch (error) {
                 console.error("Erro ao gerar PDF:", error);
                 showToast("Erro ao gerar relatório PDF", true);
             }
-        }
+        });
 
         // Configurar botões de exclusão
         function setupDeleteButtons() {
@@ -552,22 +701,6 @@
                     }
                 });
             });
-        }
-
-        // Carregar todos os dados
-        async function loadAllData() {
-            try {
-                console.log("Iniciando carregamento de todos os dados..."); // Log para depuração
-                await loadProjectData();
-                await loadPayments();
-                await loadExtras();
-                await loadReceipts();
-                await updateReport();
-                console.log("Todos os dados carregados com sucesso.");
-            } catch (error) {
-                console.error("Erro ao carregar todos os dados:", error);
-                showToast("Erro ao carregar dados", true);
-            }
         }
 
         // Formatadores
@@ -651,6 +784,7 @@
     
     <!-- Biblioteca para PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     
     <style>
         :root {
@@ -830,6 +964,10 @@
         <div class="card">
             <h2>Informações da Obra</h2>
             <div class="form-group">
+                <label for="project-select">Selecionar Obra</label>
+                <select id="project-select"></select>
+            </div>
+            <div class="form-group">
                 <label for="project-name">Nome da Obra</label>
                 <input type="text" id="project-name" placeholder="Ex: Casa Residencial">
             </div>
@@ -846,6 +984,8 @@
                 <textarea id="project-description" rows="3" placeholder="Breve descrição"></textarea>
             </div>
             <button id="save-project-btn">Salvar Informações</button>
+            <button id="new-project-btn" class="btn-success">Nova Obra</button>
+            <button id="complete-project-btn" class="btn-danger">Concluir Obra</button>
         </div>
         
         <!-- 2. Vales Recebidos -->
